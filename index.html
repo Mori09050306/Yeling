@@ -1672,9 +1672,40 @@
       }
       hideModal('actionMenuModal');
     };
+   // ==== 初始化 ====
     renderProfile();
     renderLovers();
     renderGroups();
+
+    // ==== 解决从个人页返回时，首页不刷新同步数据的 Bug ====
+    // 1. 监听手机浏览器从后台切回前台、或者从缓存页返回的事件
+    window.addEventListener('pageshow', function (e) {
+      // 如果是从缓存中恢复的（比如从个人页返回首页）
+      if (e.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        // 重新从本地存储拉取最新数据
+        userData = Storage.get('userData', { name: '我', avatar: '', bgImage: '', bgOpacity: 100 });
+        lovers = Storage.get('lovers', []);
+        groups = Storage.get('groups', []);
+        
+        // 重新渲染页面
+        renderProfile();
+        renderLovers();
+        renderGroups();
+      }
+    });
+
+    // 2. 监听网页重新获得焦点（比如切出微信去选照片，再切回来）
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        userData = Storage.get('userData', { name: '我', avatar: '', bgImage: '', bgOpacity: 100 });
+        lovers = Storage.get('lovers', []);
+        groups = Storage.get('groups', []);
+        
+        renderProfile();
+        renderLovers();
+        renderGroups();
+      }
+    });
   </script>
   </div>
 </body>
