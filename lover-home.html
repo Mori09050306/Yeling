@@ -301,7 +301,7 @@
     .neumo-compress-item:active { background: rgba(0,0,0,0.03); }
     .neumo-compress-item.active { background: #111; color: #fff; }
 
-    /* 手机端调整 */
+    /* 手机端调整 (合并版) */
     @media (max-width: 430px) {
       .collage-left {
         top: 60px; left: 15px;
@@ -322,31 +322,23 @@
       .input-bar { padding: 12px 16px; border-radius: 20px; }
       .input-bar .tiny-avatar { width: 36px; height: 36px; }
       .input-bar .input-placeholder { font-size: 15px; }
-    }
-   }
 
-     /* 仅针对手机端全屏模式调整 */
-    @media (max-width: 430px) {
-      .collage-section {
-        margin-top: 30px; /* 让拼贴相册区再往下走一点，避免顶头 */
-      }
+      /* 往下移动拼贴区 */
+      .collage-section { margin-top: 30px; }
       
-      /* ====== 新增：放大压缩弹窗的选项 ====== */
+      /* ====== 放大压缩弹窗的选项 ====== */
       .neumo-compress-item {
-        padding: 20px 24px; /* 增加上下内边距，把行撑高 */
-        font-size: 17px;    /* 放大字号，看着更清晰 */
+        padding: 20px 24px; 
+        font-size: 17px;    
       }
-      
       #compressModal .neumo-title {
         font-size: 22px; 
         margin-bottom: 20px;
       }
-      
       .neumo-compress-list {
-        border-radius: 20px; /* 加大外框圆角 */
+        border-radius: 20px; 
       }
     }
-
   </style>
 </head>
 <body>
