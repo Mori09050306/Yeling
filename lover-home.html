@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>个人主页 - 夜翎专属</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ===== 全局重置与防拉伸 ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: #d0d0d0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      max-height: 932px;
+      background-color: #F7F7F7;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 431px) {
+      .app-container {
+        border-radius: 40px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        height: 90vh;
+      }
+    }
+
+    /* ===== 核心：横向滑动区 ===== */
+    .swipe-container {
+      flex: 1;
+      display: flex;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 100px;
+    }
+    .swipe-container::-webkit-scrollbar { display: none; }
+
+    .page {
+      width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+      scroll-snap-align: center;
+      overflow-y: auto;
+      padding: 24px 16px;
+      scrollbar-width: none;
+    }
+    .page::-webkit-scrollbar { display: none; }
+
+    /* ===== 页面 1：个人主页骨架 ===== */
+    .collage-section {
+      position: relative;
+      height: 200px;
+      margin-bottom: 24px;
+    }
+    .collage-left {
+      position: absolute;
+      left: 0px;
+      top: 20px;
+      width: 45%;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    @media (min-width: 431px) {
+      .collage-left { left: 40px; }
+    }
+
+    .overlap-avatars {
+      display: flex;
+      margin-bottom: 10px;
+      justify-content: flex-start;
+    }
+    .overlap-avatars .avatar {
+      width: 50px;
+      height: 50px;
+      background-color: #000;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .overlap-avatars .avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .overlap-avatars .avatar:nth-child(2) { margin-left: -15px; }
+
+    .days-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .days-number { font-size: 32px; font-weight: 700; color: #111; line-height: 1; }
+    .days-text { font-size: 12px; color: #999; }
+
+    .collage-right {
+      position: absolute;
+      right: 10px;
+      top: 0;
+      width: 140px;
+      height: 180px;
+      cursor: pointer;
+    }
+    .polaroid-card {
+      position: absolute;
+      width: 110px;
+      height: 130px;
+      background-color: #000;
+      border: 6px solid #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .polaroid-card img { width: 100%; height: 100%; object-fit: cover; }
+    .polaroid-card:nth-child(1) { top: 0; left: -10px; transform: rotate(10deg); }
+    .polaroid-card:nth-child(2) { bottom: 0; right: -10px; transform: rotate(-5deg); }
+
+    /* 2. 个人资料区 */
+    .profile-section { text-align: center; margin-bottom: 24px; }
+    .quote-text {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 16px; color: #111; margin-bottom: 8px;
+    }
+    .quote-text::before { content: "“ "; color: #ccc; font-size: 20px;}
+    .quote-text::after { content: " ”"; color: #ccc; font-size: 20px;}
+    .status-icons {
+      font-size: 12px; color: #999; margin-bottom: 16px;
+      display: flex; justify-content: center; align-items: center; gap: 16px;
+    }
+    .status-icons span { display: flex; align-items: center; gap: 4px; }
+    
+    .input-bar {
+      display: flex; align-items: center;
+      background-color: #EBEBEB; border-radius: 16px;
+      padding: 8px 12px; width: 100%; margin: 0 auto;
+    }
+    .input-bar .tiny-avatar {
+      width: 28px; height: 28px;
+      background-color: #000; border-radius: 50%;
+      margin-right: 10px; flex-shrink: 0;
+      overflow: hidden; display: flex; align-items: center; justify-content: center;
+    }
+    .input-bar .tiny-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .input-bar .input-placeholder {
+      font-size: 13px; color: #888; text-align: left; line-height: 1.4;
+    }
+
+    /* 3. 功能八宫格 */
+    .grid-section {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px 10px;
+      margin-bottom: 24px;
+      width: 100%; box-sizing: border-box;
+    }
+    .grid-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; cursor: pointer;
+    }
+    .icon-box {
+      width: 100%; max-width: 58px; aspect-ratio: 1;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      display: flex; justify-content: center; align-items: center;
+      position: relative; transition: transform 0.2s;
+    }
+    .grid-item:active .icon-box { transform: scale(0.9); background: rgba(255, 255, 255, 0.9); }
+    .icon-box svg {
+      width: 24px; height: 24px; stroke: #111; stroke-width: 1.5; fill: none;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .icon-badge {
+      position: absolute; top: -6px; right: -6px;
+      background-color: #ff3b30; color: #fff;
+      font-size: 12px; font-weight: bold;
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 2;
+      line-height: 1; text-align: center;
+    }
+    .grid-text { font-size: 11px; color: #555; text-align: center; }
+
+    /* 4. 页面指示器 */
+    .page-indicator {
+      position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; z-index: 10;
+    }
+    .dot {
+      width: 6px; height: 6px; background-color: #D1D1D1; border-radius: 3px; transition: all 0.3s ease;
+    }
+    .dot.active { width: 16px; background-color: #111; }
+
+    /* 5. 底部固定导航栏 */
+    .bottom-nav {
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 32px); max-width: 398px; height: 52px;
+      background-color: #FFFFFF; border-radius: 26px;
+      display: flex; justify-content: space-around; align-items: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06); z-index: 100;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 100%; height: 100%; cursor: pointer;
+    }
+    .nav-item svg {
+      width: 20px; height: 22px; stroke: #999; stroke-width: 1.8; fill: none;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .nav-item.active svg { stroke: #111; }
+
+    /* 页面 2 (空白页) */
+    .page-2 { display: flex; justify-content: center; align-items: center; color: #999; font-size: 14px; }
+
+    /* ===== 拟态弹窗 (复用) ===== */
+    .neumo-modal-mask {
+      position: absolute; inset: 0; background: rgba(240, 240, 240, 0.6);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; z-index: 999; animation: fadeIn .25s ease;
+    }
+    .neumo-modal-mask[hidden] { display: none; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .neumo-card {
+      width: 100%; max-width: 320px; background: #f0f0f0; border-radius: 32px;
+      padding: 28px 24px; box-shadow: -8px -8px 16px #ffffff, 8px 8px 16px rgba(0, 0, 0, 0.08);
+      animation: popIn .3s cubic-bezier(0.2, 0.8, 0.3, 1);
+      position: relative;
+    }
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    
+    .neumo-title { font-size: 18px; font-weight: 700; color: #333; text-align: center; margin-bottom: 24px; letter-spacing: 1px; }
+    
+    .neumo-btn-group { display: flex; gap: 16px; margin-top: 10px; }
+    .neumo-btn {
+      flex: 1; padding: 14px; border: none; border-radius: 16px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.2s ease;
+      background: #f0f0f0; box-shadow: -4px -4px 10px #ffffff, 4px 4px 10px rgba(0, 0, 0, 0.08);
+    }
+    .neumo-btn:active { box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.06), inset -4px -4px 8px #ffffff; transform: scale(0.98); }
+    .neumo-btn-ghost { color: #777; }
+    .neumo-btn-primary { color: #111; }
+
+    /* 弹窗内的上传框 */
+    .neumo-upload-box {
+      width: 100px; height: 100px; border-radius: 50%; background: #f0f0f0;
+      box-shadow: -6px -6px 12px #ffffff, 6px 6px 12px rgba(0, 0, 0, 0.08);
+      display: flex; align-items: center; justify-content: center; position: relative;
+      overflow: hidden; cursor: pointer; margin: 0 auto 20px;
+    }
+    .neumo-upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; z-index: 10; }
+    .neumo-upload-box img { width: 100%; height: 100%; object-fit: cover; }
+    .neumo-upload-box svg { width: 32px; height: 32px; stroke: #888; }
+
+    /* 图片压缩选择列表 */
+    .neumo-compress-list {
+      background: #f0f0f0; border-radius: 16px;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.05), inset -2px -2px 6px #ffffff;
+      margin-bottom: 20px; overflow: hidden;
+    }
+    .neumo-compress-item {
+      padding: 14px 18px; font-size: 14px; color: #333; border-bottom: 1px solid rgba(0,0,0,0.05);
+      cursor: pointer; display: flex; justify-content: space-between;
+    }
+    .neumo-compress-item:last-child { border-bottom: none; }
+    .neumo-compress-item:active { background: rgba(0,0,0,0.03); }
+    .neumo-compress-item.active { background: #111; color: #fff; }
+
+    /* 手机端调整 */
+    @media (max-width: 430px) {
+      .collage-left {
+        top: 60px; left: 15px;
+        display: flex; flex-direction: column; align-items: flex-start;
+      }
+      .days-row { justify-content: flex-start; margin-left: 5px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- 滑动区域 -->
+    <div class="swipe-container">
+      
+      <!-- Page 1: 个人主页 -->
+      <div class="page">
+        
+        <!-- 1. 拼贴区 -->
+        <div class="collage-section">
+          <!-- 头像区 -->
+          <div class="collage-left">
+            <div class="overlap-avatars">
+              <!-- 爱人头像 (点击修改) -->
+              <div class="avatar" id="loverAvatarBtn">
+                <img id="loverAvatarImg" src="" style="display:none;">
+              </div>
+              <!-- 我的头像 (点击修改) -->
+              <div class="avatar" id="myAvatarBtn">
+                <img id="myAvatarImg" src="" style="display:none;">
+              </div>
+            </div>
+            <div class="days-row">
+              <span class="days-text">在一起</span>
+              <span class="days-number">99</span>
+              <span class="days-text">天</span>
+            </div>
+          </div>
+          <!-- 相册区 (点击修改) -->
+          <div class="collage-right">
+            <div class="polaroid-card" id="polaroid0Btn">
+              <img id="polaroid0Img" src="" style="display:none;">
+            </div>
+            <div class="polaroid-card" id="polaroid1Btn">
+              <img id="polaroid1Img" src="" style="display:none;">
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 个人资料 -->
+        <div class="profile-section">
+          <div class="quote-text">今日状态</div>
+          <div class="status-icons">
+            <span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+              未定义
+            </span>
+            <span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              未定义
+            </span>
+          </div>
+
+          <!-- 下方的对话框小头像 -->
+          <div class="input-bar">
+            <div class="tiny-avatar" id="chatTinyAvatar">
+              <img id="chatTinyAvatarImg" src="" style="display:none;">
+            </div>
+            <div class="input-placeholder">未定义 未定义</div>
+          </div>
+        </div>
+
+        <!-- 3. 八宫格 (保留你之前的) -->
+        <div class="grid-section">
+          <div class="grid-item">
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            </div>
+            <div class="grid-text">聊天</div>
+          </div>
+          <div class="grid-item">
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7 L9.5 4 L14.5 4 L16 7"></path><circle cx="12" cy="13" r="4"></circle><circle cx="18" cy="10" r="1" fill="#111" stroke="none"></circle></svg>
+            </div>
+            <div class="grid-text">朋友圈</div>
+          </div>
+          <div class="grid-item">
+            <div class="icon-box">
+              <div class="icon-badge">3</div>
+              <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div class="grid-text">信箱</div>
+          </div>
+          <div class="grid-item">
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            </div>
+            <div class="grid-text">相册</div>
+          </div>
+          <div class="grid-item">
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="grid-text">纪念日</div>
+          </div>
+          <div class="grid-item">
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+            </div>
+            <div class="grid-text">经期记录</div>
+          </div>
+          <div class="grid-item">
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            </div>
+            <div class="grid-text">音乐</div>
+          </div>
+          <div class="grid-item">
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 13h.01M18 11h.01"/></svg>
+            </div>
+            <div class="grid-text">一起玩</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Page 2: 空白页 -->
+      <div class="page page-2">第二页（等待填充）</div>
+    </div>
+
+    <!-- 页面指示器 -->
+    <div class="page-indicator">
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <!-- 底部固定导航栏 -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M18 2L22 6L12 16L8 12L18 2Z"></path><path d="M8 12L4 16C2.89543 17.1046 2.89543 18.8954 4 20C5.10457 21.1046 6.89543 21.1046 8 20L12 16"></path></svg>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== 弹窗区域 ===== -->
+  
+  <!-- 拟态 - 更换头像弹窗 -->
+  <div class="neumo-modal-mask" id="editAvatarModal" hidden>
+    <div class="neumo-card">
+      <div class="neumo-title" id="avatarModalTitle">更换头像</div>
+      <div class="neumo-upload-box" id="avatarUploadBtn">
+        <input type="file" id="avatarFileInput" accept="image/*">
+        <div id="avatarPreviewInner" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+        </div>
+      </div>
+      <div class="neumo-btn-group">
+        <button class="neumo-btn neumo-btn-ghost" onclick="document.getElementById('editAvatarModal').hidden=true">取消</button>
+        <button class="neumo-btn neumo-btn-primary" id="saveAvatarBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 拟态 - 图片压缩选择弹窗 -->
+  <div class="neumo-modal-mask" id="compressModal" hidden>
+    <div class="neumo-card">
+      <div class="neumo-title">选择图片大小</div>
+      <div class="neumo-compress-list" id="compressList"></div>
+      <button class="neumo-btn neumo-btn-ghost" id="cancelCompressBtn" style="width:100%;">取消</button>
+    </div>
+  </div>
+
+  <!-- 隐藏的文件选择器 -->
+  <input type="file" id="hiddenFileInput" accept="image/*" style="display:none;">
+
+  <script>
+    const container = document.querySelector('.swipe-container');
+    const dots = document.querySelectorAll('.dot');
+
+    // 滑动监听
+    container.addEventListener('scroll', () => {
+      const pageIndex = Math.round(container.scrollLeft / container.clientWidth);
+      dots.forEach((dot, index) => {
+        if (index === pageIndex) dot.classList.add('active');
+        else dot.classList.remove('active');
+      });
+    });
+
+    // ===== 数据管理 =====
+    const $ = id => document.getElementById(id);
+    const showModal = id => $(id).hidden = false;
+    const hideModal = id => $(id).hidden = true;
+
+    // 从本地存储读取数据 (以后合并到主页时，这里会自动读取你主页保存的信息)
+    // 从本地存储读取真实数据
+    let userData = JSON.parse(localStorage.getItem('userData')) || { name: '我', avatar: '' };
+    let lovers = JSON.parse(localStorage.getItem('lovers')) || [];
+
+    // 获取链接里的 ?id=xxx (如果主页传了id过来)
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentLoverId = urlParams.get('id');
+
+    // 如果没有传 ID，就默认取列表里的第一个爱人；如果列表为空，就给个默认数据
+    let currentLover = lovers.find(l => l.id === currentLoverId) || lovers[0] || { id: 'default', name: 'TA', avatar: '' };
+    
+    // 关键：把当前真实使用的 ID 赋值，防止报错
+    currentLoverId = currentLover.id;
+    
+   // 读取相册数据 (按爱人ID独立存储)
+    let allHomeData = JSON.parse(localStorage.getItem('loverHomeData')) || {};
+    if (!allHomeData[currentLoverId]) {
+      allHomeData[currentLoverId] = { p0: '', p1: '' };
+    }
+    let homeData = allHomeData[currentLoverId];
+
+    // ===== 渲染初始状态 =====
+    function renderUI() {
+      // 爱人头像 (上方)
+      if (currentLover.avatar) {
+        $('loverAvatarImg').src = currentLover.avatar;
+        $('loverAvatarImg').style.display = 'block';
+      } else {
+        $('loverAvatarImg').style.display = 'none';
+      }
+      
+      // 爱人头像 (下方对话框同步)
+      if (currentLover.avatar) {
+        $('chatTinyAvatarImg').src = currentLover.avatar;
+        $('chatTinyAvatarImg').style.display = 'block';
+      } else {
+        $('chatTinyAvatarImg').style.display = 'none';
+      }
+
+      // 我的头像
+      if (userData.avatar) {
+        $('myAvatarImg').src = userData.avatar;
+        $('myAvatarImg').style.display = 'block';
+      } else {
+        $('myAvatarImg').style.display = 'none';
+      }
+
+      // 相册
+      if (homeData.p0) {
+        $('polaroid0Img').src = homeData.p0;
+        $('polaroid0Img').style.display = 'block';
+      }
+      if (homeData.p1) {
+        $('polaroid1Img').src = homeData.p1;
+        $('polaroid1Img').style.display = 'block';
+      }
+    }
+    renderUI();
+
+    // ===== 核心：图片压缩与上传逻辑 =====
+    let pendingFile = null;
+    let pendingCallback = null;
+
+    // 真实的压缩算法
+    function compressImage(file, maxSizeKB, callback) {
+      if (file.size / 1024 <= maxSizeKB) {
+        const r = new FileReader(); r.onload = e => callback(e.target.result); r.readAsDataURL(file); return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          let ratio = Math.sqrt((maxSizeKB * 1024) / file.size);
+          canvas.width = width * ratio; canvas.height = height * ratio;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          callback(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 打开压缩选择器
+    function openCompressDialog(file, callback) {
+      pendingFile = file;
+      pendingCallback = callback;
+      const list = $('compressList');
+      const realSize = (file.size / 1024).toFixed(0);
+      
+      const sizes = [
+        { label: '小', kb: 25 },
+        { label: '中', kb: 78 },
+        { label: '大', kb: 248 },
+        { label: '实际大小', kb: file.size / 1024 }
+      ];
+
+      list.innerHTML = sizes.map(s => `
+        <div class="neumo-compress-item" data-kb="${s.kb}">
+          <span>${s.label}</span>
+          <span>(${s.kb === file.size / 1024 ? realSize : s.kb} KB)</span>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.neumo-compress-item').forEach(item => {
+        item.onclick = function() {
+          list.querySelectorAll('.neumo-compress-item').forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+          const targetKB = parseFloat(this.dataset.kb);
+          
+          setTimeout(() => {
+            compressImage(pendingFile, targetKB, (dataUrl) => {
+              pendingCallback(dataUrl);
+              hideModal('compressModal');
+              pendingFile = null; pendingCallback = null;
+            });
+          }, 150);
+        };
+      });
+      showModal('compressModal');
+    }
+
+    $('cancelCompressBtn').onclick = () => { hideModal('compressModal'); pendingFile = null; pendingCallback = null; };
+
+    // ===== 交互事件绑定 =====
+    let currentUploadTarget = ''; // 'lover' | 'my' | 'p0' | 'p1'
+    let tempAvatarUrl = null;
+
+    // 1. 点击爱人头像
+    $('loverAvatarBtn').onclick = () => {
+      currentUploadTarget = 'lover';
+      $('avatarModalTitle').textContent = '更换爱人头像';
+      tempAvatarUrl = currentLover.avatar;
+      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
+      showModal('editAvatarModal');
+    };
+
+    // 2. 点击我的头像
+    $('myAvatarBtn').onclick = () => {
+      currentUploadTarget = 'my';
+      $('avatarModalTitle').textContent = '更换我的头像';
+      tempAvatarUrl = userData.avatar;
+      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
+      showModal('editAvatarModal');
+    };
+
+    // 3. 点击相册
+    $('polaroid0Btn').onclick = () => {
+      currentUploadTarget = 'p0';
+      $('avatarModalTitle').textContent = '更换相册照片 1';
+      tempAvatarUrl = homeData.p0;
+      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
+      showModal('editAvatarModal');
+    };
+
+    $('polaroid1Btn').onclick = () => {
+      currentUploadTarget = 'p1';
+      $('avatarModalTitle').textContent = '更换相册照片 2';
+      tempAvatarUrl = homeData.p1;
+      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
+      showModal('editAvatarModal');
+    };
+
+    // 弹窗内：选择文件
+    $('avatarFileInput').onchange = function() {
+      if (this.files[0]) {
+        openCompressDialog(this.files[0], (compressedUrl) => {
+          tempAvatarUrl = compressedUrl;
+          $('avatarPreviewInner').innerHTML = `<img src="${tempAvatarUrl}">`;
+        });
+      }
+      this.value = '';
+    };
+
+    // 弹窗内：点击保存
+    $('saveAvatarBtn').onclick = () => {
+      if (currentUploadTarget === 'lover') {
+        currentLover.avatar = tempAvatarUrl;
+        
+        // 查找主页传来的真实爱人ID，并更新其数据
+        let idx = lovers.findIndex(l => l.id === currentLoverId);
+        if(idx > -1) {
+          lovers[idx].avatar = tempAvatarUrl;
+        } else {
+          // 如果没找到(可能是默认数据)，就主动新增一个存进去
+          lovers.push({ id: currentLoverId, name: currentLover.name, avatar: tempAvatarUrl });
+        }
+        
+        // 存入缓存，这样主页刷新就能读到了！
+        localStorage.setItem('lovers', JSON.stringify(lovers));
+      } else if (currentUploadTarget === 'my') {
+        userData.avatar = tempAvatarUrl;
+        localStorage.setItem('userData', JSON.stringify(userData));
+      } else if (currentUploadTarget === 'p0') {
+        homeData.p0 = tempAvatarUrl;
+        allHomeData[currentLoverId] = homeData;
+        localStorage.setItem('loverHomeData', JSON.stringify(allHomeData));
+      } else if (currentUploadTarget === 'p1') {
+        homeData.p1 = tempAvatarUrl;
+        allHomeData[currentLoverId] = homeData;
+        localStorage.setItem('loverHomeData', JSON.stringify(allHomeData));
+      }
+      
+      renderUI(); // 重新渲染界面同步显示
+      hideModal('editAvatarModal');
+    };
+
+  </script>
+</body>
+</html>

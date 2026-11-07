@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>夜翎专属</title>
+  <style>
+    /* ===== 基础重置 ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;    }
+
+    :root {
+      --bg-outer: #e6e6e6; /* 外层页面灰底 */
+      --phone-bg: #f9f9f9; /* 手机内部底色 */
+      --card-bg: #ffffff;  /* 卡片纯白底色 */
+      --border-gray: #e0e0e0; /* 灰色描边颜色 */
+      --ink: #111;
+      --soft-ink: #555;
+      --muted: #999;
+      
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      
+      --shadow-phone: 0 25px 60px rgba(0, 0, 0, .1), 0 0 0 1px rgba(0,0,0,0.05);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg-outer);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* ===== 手机物理外观 ===== */
+    .phone-frame {
+      width: 100%;
+      max-width: 400px;
+      height: 85vh;
+      max-height: 850px;
+      background: var(--phone-bg);
+      border-radius: 40px;
+      box-shadow: var(--shadow-phone);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* 顶部状态栏模拟 */
+     /* 调整状态栏布局，让文字绝对居中 */
+    .status-bar {
+      display: flex;
+      justify-content: center; /* 改为居中 */
+      align-items: center;
+      padding: 14px 20px 10px;
+      background: var(--phone-bg);
+      z-index: 10;
+    }
+
+    /* 彩虹动态渐变文字样式 */
+    .tagline-text {
+      font-size: 15px; /* 和你原来的字号保持一致 */
+      font-weight: 700;
+      letter-spacing: 4px; /* 增加字间距，像原文件那样有呼吸感 */
+      background: linear-gradient(90deg, #f9a8b4, #f7c5a8, #f5d0a8, #c4d4a8, #a8c4d4, #c4a8d4, #f9a8b4);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientMove 6s ease-in-out infinite;
+    }
+
+    /* 渐变动画 */
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .status-icons {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .status-icons svg {
+      height: 12px;
+      fill: currentColor;
+    }
+
+    /* 应用主容器 */
+    .app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .page {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .page[hidden] { display: none; }
+
+    /* 新增：全局滚动容器 */
+    .main-scroll-container {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: none;
+      display: flex;
+      flex-direction: column;
+    }
+    .main-scroll-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* ===== 个人信息卡片 (白底+灰边+头像灰圈) ===== */
+    .profile-wrapper {
+      padding: 12px 16px;
+    }
+
+    .profile-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-gray);
+      border-radius: 20px;
+      padding: 24px 16px;
+      text-align: center;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden; /* 保证背景图不出界 */
+      transition: transform 0.2s;
+    }
+    
+    .profile-card:active {
+      transform: scale(0.98);
+    }
+
+    /* 背景图层 */
+    .profile-bg-layer {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .profile-card.has-bg .profile-bg-layer {
+      opacity: 1; 
+    }
+
+    /* 确保所有内容在背景图之上 */
+    .profile-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 头像框：灰色圆圈永远在最外层 */
+    .avatar-ring {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      border: 1px solid var(--border-gray); /* 细灰色圆环 */
+      padding: 3px; /* 内边距，让头像和灰圈隔开，不遮挡灰圈 */
+      background: transparent;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: transform .2s;
+    }
+    .avatar-ring:active { transform: scale(.95); }
+
+    /* 头像内部图片/默认图标 */
+    .avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .avatar-inner svg {
+      width: 32px;
+      height: 32px;
+      stroke: #888;
+    }
+    .avatar-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* 昵称小药丸 */
+    .name-pill {
+      padding: 4px 14px;
+      background: #fff;
+      border: 1px solid var(--border-gray);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--ink);
+      font-weight: 500;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    /* ===== 列表区 ===== */
+      .list-scroll {
+      padding: 0 16px calc(16px + var(--safe-bottom));
+      scrollbar-width: none;
+    }
+    .list-scroll::-webkit-scrollbar { display: none; }
+
+    .list-section { margin-top: 12px; }
+
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 4px;
+      margin-bottom: 4px;
+    }
+
+    .list-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #555;
+      letter-spacing: .5px;
+    }
+
+    .list-add-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: var(--ink);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      transition: transform .2s;
+    }
+    .list-add-btn:active { transform: scale(.9); }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 30px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .empty-state svg {
+      width: 46px;
+      height: 46px;
+      stroke: #c0c0c0;
+      margin-bottom: 8px;
+    }
+
+    /* 联系人卡片 */
+    .contact-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-gray);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .contact-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--border-gray);
+      padding: 2px;
+    }
+    .contact-avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #f0f0f0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .contact-avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+    .contact-info { flex: 1; min-width: 0; }
+    .contact-name { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+    .contact-msg { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ===== 底部导航栏 ===== */
+    .tabbar {
+      display: flex;
+      background: var(--phone-bg);
+      border-top: 1px solid var(--border-gray);
+      padding: 8px 0 calc(8px + var(--safe-bottom));
+      z-index: 10;
+    }
+
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 0;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--muted);
+      transition: color .2s;
+    }
+    .tab-item.active { color: var(--ink); }
+    .tab-item svg { width: 22px; height: 22px; stroke: currentColor; }
+    .tab-label { font-size: 11px; font-weight: 500; }
+
+    /* ===== 弹窗样式 ===== */
+    .modal-mask {
+      position: absolute; /* 限制在手机框内 */
+      inset: 0;
+      background: rgba(0, 0, 0, .4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+      animation: fadeIn .2s ease;
+    }
+    .modal-mask[hidden] { display: none; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-card {
+      width: 100%;
+      max-width: 300px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+    }
+
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+    .modal-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-gray);
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    .modal-input:focus { border-color: var(--ink); }
+    
+    .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .modal-btn-primary { background: var(--ink); color: #fff; }
+    .modal-btn-ghost { background: transparent; color: var(--soft-ink); border: 1px solid var(--border-gray); }
+
+    /* 头像上传小部件 */
+    .avatar-upload {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      border: 1px solid var(--border-gray);
+      padding: 2px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .avatar-upload-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #f0f0f0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .avatar-upload input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    /* 占位页 */
+    .placeholder-page {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+    }
+    .placeholder-page svg { width: 48px; height: 48px; stroke: #ccc; margin-bottom: 12px; }
+    .placeholder-page h2 { font-size: 16px; color: var(--ink); margin-bottom: 8px; }
+    .placeholder-page p { font-size: 13px; text-align: center; line-height: 1.6; }
+
+  /* 小屏手机适配：取消手机外壳，实现全屏平铺 */
+    @media (max-width: 428px) {
+      body { 
+        padding: 0; /* 去除页面四周的留白 */
+      }
+      .phone-frame {
+        max-width: 100%; /* 取消最大宽度限制 */
+        height: 100vh; /* 高度撑满屏幕 */
+        max-height: 100vh;
+        border-radius: 0; /* 去除圆角，变成直角全屏 */
+        box-shadow: none; /* 去除外壳阴影 */
+      }
+    }
+  /* ===== 拟态极简风格弹窗 (Neumorphism) ===== */
+    .neumo-modal-mask {
+      position: absolute;
+      inset: 0;
+      background: rgba(240, 240, 240, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 999;
+      animation: fadeIn .25s ease;
+    }
+    .neumo-modal-mask[hidden] { display: none; }
+
+    .neumo-card {
+      width: 100%;
+      max-width: 320px;
+      background: #f0f0f0;
+      border-radius: 32px;
+      padding: 28px 24px;
+      box-shadow: -8px -8px 16px #ffffff, 8px 8px 16px rgba(0, 0, 0, 0.08);
+      position: relative;
+      animation: popIn .3s cubic-bezier(0.2, 0.8, 0.3, 1);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .neumo-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      text-align: center;
+      margin-bottom: 24px;
+      letter-spacing: 1px;
+    }
+
+    /* 拟态输入框 */
+        /* 拟态输入框 */
+    .neumo-input {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1px solid rgba(0, 0, 0, 0.05); /* 增加极淡的灰色边缘，让框体更清晰 */
+      border-radius: 16px;
+      background: #f0f0f0;
+      box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.05), inset -2px -2px 5px #ffffff; /* 调整内阴影，让凹陷感更细腻 */
+      font-size: 15px;
+      color: #111;
+      outline: none;
+      margin-bottom: 20px;
+      transition: 0.2s;
+      font-family: inherit;
+    }
+    .neumo-input:focus {
+      border-color: rgba(0, 0, 0, 0.15); /* 聚焦时边框稍微加深 */
+      box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08), inset -4px -4px 8px #ffffff;
+    }
+
+    /* 拟态按钮 */
+    .neumo-btn-group {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+    }
+    .neumo-btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    .neumo-btn-primary {
+      background: #f0f0f0;
+      color: #111;
+      box-shadow: -4px -4px 10px #ffffff, 4px 4px 10px rgba(0, 0, 0, 0.08);
+    }
+    .neumo-btn-primary:active {
+      box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.06), inset -4px -4px 8px #ffffff;
+      transform: scale(0.98);
+    }
+        .neumo-btn-ghost {
+      background: #f0f0f0; /* 改为实色背景 */
+      color: #777;
+      box-shadow: -4px -4px 10px #ffffff, 4px 4px 10px rgba(0, 0, 0, 0.08); /* 增加同样的拟态外阴影 */
+    }
+    .neumo-btn-ghost:active {
+      box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.06), inset -4px -4px 8px #ffffff; /* 增加同样的按压内阴影 */
+      transform: scale(0.98);
+    }
+
+    /* 拟态滚动条容器 */
+    .neumo-slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 10px 4px;
+    }
+    .neumo-slider-icon {
+      font-size: 16px;
+      color: #888;
+    }
+
+    /* 拟态滑块 (Range) */
+    .neumo-range {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 12px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #111 0%, #fff 100%); /* 渐变轨道 */
+      outline: none;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2), inset -1px -1px 3px #fff;
+    }
+    .neumo-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      box-shadow: -2px -2px 6px #ffffff, 2px 2px 6px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .neumo-range::-webkit-slider-thumb:active {
+      transform: scale(1.1);
+    }
+
+    /* 拟态上传按钮 */
+    .neumo-upload-box {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      box-shadow: -6px -6px 12px #ffffff, 6px 6px 12px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .neumo-upload-box:active {
+      box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.06), inset -4px -4px 8px #ffffff;
+    }
+    .neumo-upload-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .neumo-upload-box input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    /* 图片压缩选择列表 */
+    .neumo-compress-list {
+      background: #f0f0f0;
+      border-radius: 16px;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.05), inset -2px -2px 6px #ffffff;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .neumo-compress-item {
+      padding: 14px 18px;
+      font-size: 14px;
+      color: #333;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+    }
+    .neumo-compress-item:last-child { border-bottom: none; }
+    .neumo-compress-item:active { background: rgba(0,0,0,0.03); }
+    .neumo-compress-item.active {
+      background: #111;
+      color: #fff;
+    }
+
+    /* ===== 聊天列表卡片（微信风格） ===== */
+    .chat-list-item {
+      display: flex;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border-gray);
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+      user-select: none; /* 禁止选中文字 */
+      -webkit-user-select: none; /* 兼容苹果 iOS */
+    }
+    .chat-list-item:active {
+      background: #f0f0f0;
+    }
+    
+    /* 头像 */
+    .chat-avatar-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius:  50%; /* 正圆形头像 */
+      background: #e8e8e8;
+      margin-right: 12px;
+      position: relative;
+      flex-shrink: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chat-avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .chat-avatar-wrap svg {
+      width: 24px;
+      height: 24px;
+      stroke: #888;
+    }
+    /* 群聊头像特殊处理 */
+    .chat-avatar-wrap.group {
+      border-radius: 50%; 
+      background: #e6e6e6;
+      display: flex;
+      flex-wrap: wrap;
+      padding: 2px;
+      gap: 2px;
+    }
+    .chat-avatar-wrap.group img {
+      width: calc(50% - 1px);
+      height: calc(50% - 1px);
+      border-radius: 4px;
+    }
+
+    /* 信息区 */
+    .chat-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .chat-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-preview {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* 右侧时间与角标 */
+    .chat-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+    .chat-time {
+      font-size: 11px;
+      color: #b0b0b0;
+      margin-bottom: 4px;
+    }
+    .chat-badge {
+      background: #ff3b30;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 10px;
+      min-width: 16px;
+      text-align: center;
+    }
+
+    /* 弹窗内的成员多选 */
+    .member-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      max-height: 160px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 12px;
+      box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05), inset -2px -2px 5px #ffffff;
+      margin-bottom: 20px;
+    }
+    .member-select-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 10px;
+      transition: 0.2s;
+      border: 2px solid transparent;
+    }
+    .member-select-item.selected {
+      background: #e0e0e0;
+      border-color: #111;
+    }
+    .member-select-item .ms-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #fff;
+      overflow: hidden;
+    }
+    .member-select-item .ms-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .member-select-item .ms-name {
+      font-size: 11px;
+      color: #555;
+      font-weight: 500;
+    }
+    .member-select-item.selected .ms-name {
+      color: #111;
+      font-weight: 700;
+    }
+
+    .chat-avatar-wrap svg { width: 24px; height: 24px; stroke: #888; flex-shrink: 0; }
+    .chat-avatar-wrap.group svg { width: 50%; height: 50%; }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- 祝福锚点 -->
+  <a id="__blessing__" style="display:none;" data-souls="黎深·祁煜·小刘·老何·杨老太太" data-wish="永结同心·白头偕老·平安顺遂·相亲相爱"></a>
+
+  <!-- 手机外壳 -->
+  <div class="phone-frame">
+    
+    <!-- 状态栏模拟 -->
+    <div class="status-bar">
+      <span class="tagline-text">✦ 夜 翎 专 属 ✦</span>
+    </div>
+
+    <div class="app">
+      <!-- 主页 -->
+      <div class="page" id="page-home">
+        <!-- 新增：全局滚动容器 -->
+        <div class="main-scroll-container">
+        
+        <!-- 个人信息区域 -->
+        <div class="profile-wrapper">
+          <div class="profile-card" id="profileCard">
+            <!-- 背景图层 -->
+            <div class="profile-bg-layer" id="profileBgLayer"></div>
+            
+            <!-- 内容层 -->
+            <div class="profile-content">
+              <!-- 头像（带灰圈） -->
+              <div class="avatar-ring" id="myAvatarBtn">
+                <div class="avatar-inner" id="myAvatarInner">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/>
+                  </svg>
+                </div>
+              </div>
+              <!-- 昵称 -->
+              <div class="name-pill" id="myNameBtn">我</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 联系人列表 -->
+        <div class="list-scroll">
+          <!-- 爱人列表 -->
+          <div class="list-section">
+            <div class="list-header">
+              <span class="list-title">我的爱人</span>
+              <button class="list-add-btn" id="addLoverBtn">+</button>
+            </div>
+            <div id="loverList">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                </svg>
+                <div>还没有与爱人链接<br>点击右上角「+」开始链接</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 爱的小屋列表 -->
+          <div class="list-section">
+            <div class="list-header">
+              <span class="list-title">爱的小屋</span>
+              <button class="list-add-btn" id="addGroupBtn">+</button>
+            </div>
+            <div id="groupList">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                  <path d="M9 22V12h6v10"/>
+                </svg>
+                <div>还没有建立爱的小屋<br>点击右上角「+」创建小屋</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 功能设置页 -->
+      <div class="page" id="page-settings" hidden>
+        <div class="placeholder-page">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v3M12 20v3M4.2 4.2l2.2 2.2M17.6 17.6l2.2 2.2M1 12h3M20 12h3M4.2 19.8l2.2-2.2M17.6 6.4l2.2-2.2"/>
+          </svg>
+          <h2>功能设置</h2>
+          <p>开发中...</p>
+        </div>
+      </div>
+
+      <!-- 美化设置页 -->
+      <div class="page" id="page-appearance" hidden>
+        <div class="placeholder-page">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 3c-4.5 0-9 3-9 9s4.5 9 9 9 9-3 9-9-4.5-9-9-9z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <h2>美化设置</h2>
+          <p>开发中...</p>
+        </div>
+      </div>
+
+      <!-- UI设置页 -->
+      <div class="page" id="page-ui" hidden>
+        <div class="placeholder-page">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="4"/>
+            <path d="M7 7h10M7 12h7M7 17h4"/>
+          </svg>
+          <h2>UI设置</h2>
+          <p>开发中...</p>
+        </div>
+      </div>
+     </div>
+
+      <!-- 底部导航栏 -->
+      <div class="tabbar">
+        <button class="tab-item active" data-page="home">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path d="M9 22V12h6v10"/>
+          </svg>
+          <span class="tab-label">主页面</span>
+        </button>
+        <button class="tab-item" data-page="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v3M12 20v3M4.2 4.2l2.2 2.2M17.6 17.6l2.2 2.2M1 12h3M20 12h3M4.2 19.8l2.2-2.2M17.6 6.4l2.2-2.2"/>
+          </svg>
+          <span class="tab-label">功能设置</span>
+        </button>
+        <button class="tab-item" data-page="appearance">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 3c-4.5 0-9 3-9 9s4.5 9 9 9 9-3 9-9-4.5-9-9-9z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span class="tab-label">美化设置</span>
+        </button>
+        <button class="tab-item" data-page="ui">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="4"/>
+            <path d="M7 7h10M7 12h7M7 17h4"/>
+          </svg>
+          <span class="tab-label">UI设置</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 弹窗放在手机壳内部，防止全屏偏移 -->
+        <!-- 拟态 - 编辑昵称弹窗 -->
+    <div class="neumo-modal-mask" id="editNameModal" hidden>
+      <div class="neumo-card">
+        <div class="neumo-title">修改昵称</div>
+        <input type="text" class="neumo-input" id="nameInput" placeholder="输入新昵称" maxlength="20">
+        <div class="neumo-btn-group">
+          <button class="neumo-btn neumo-btn-ghost" id="cancelName">取消</button>
+          <button class="neumo-btn neumo-btn-primary" id="saveName">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 拟态 - 设置头像弹窗 -->
+    <div class="neumo-modal-mask" id="editAvatarModal" hidden>
+      <div class="neumo-card">
+        <div class="neumo-title">更换头像</div>
+        <div class="neumo-upload-box" id="avatarUploadBox">
+          <input type="file" id="avatarInput" accept="image/*">
+          <div class="avatar-upload-inner" id="avatarPreviewInner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="neumo-btn-group">
+          <button class="neumo-btn neumo-btn-ghost" id="cancelAvatar">取消</button>
+          <button class="neumo-btn neumo-btn-primary" id="saveAvatar">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 拟态 - 设置背景及透明度弹窗 -->
+    <div class="neumo-modal-mask" id="setBgModal" hidden>
+      <div class="neumo-card">
+        <div class="neumo-title">背景壁纸</div>
+        
+        <div class="neumo-upload-box" style="border-radius: 16px; width: 100%; height: 100px;" id="bgUploadBox">
+          <input type="file" id="bgInput" accept="image/*">
+                    <div id="bgPreviewInner" style="width: 100%; height: 100%; display:flex; align-items:center; justify-content:center; color:#999; font-size: 13px; position: relative; border-radius: 16px; overflow: hidden;">
+            <div id="bgPreviewLayer" style="position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 1; z-index: 1; pointer-events: none;"></div>
+            <span style="position: relative; z-index: 2;">点击上传图片</span>
+          </div>
+        </div>
+
+        <div class="neumo-slider-container">
+          <span class="neumo-slider-icon">🌑</span>
+          <input type="range" class="neumo-range" id="bgOpacitySlider" min="0" max="100" value="100">
+          <span class="neumo-slider-icon">☀️</span>
+        </div>
+
+        <div class="neumo-btn-group">
+          <button class="neumo-btn neumo-btn-ghost" id="clearBg">清除</button>
+          <button class="neumo-btn neumo-btn-primary" id="saveBg">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 拟态 - 全局确认/提示弹窗 -->
+    <div class="neumo-modal-mask" id="sysAlertModal" hidden style="z-index: 9999;">
+      <div class="neumo-card">
+        <div class="neumo-title" id="sysAlertTitle">提示</div>
+        <div id="sysAlertMsg" style="text-align: center; font-size: 14px; color: #555; margin-bottom: 24px; line-height: 1.6;"></div>
+        <div class="neumo-btn-group" id="sysAlertBtnGroup">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 拟态 - 长按操作菜单 -->
+    <div class="neumo-modal-mask" id="actionMenuModal" hidden style="align-items: flex-end; padding: 0; z-index: 9999;">
+      <div class="neumo-card" style="width: 100%; max-width: 100%; border-radius: 32px 32px 0 0; animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);">
+        <div class="neumo-title" id="actionMenuTitle" style="margin-bottom: 16px;">操作</div>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+          <button class="neumo-btn neumo-btn-primary" id="btnEditItem">编辑资料</button>
+          <button class="neumo-btn neumo-btn-ghost" id="btnDeleteItem" style="color: #d32f2f;">解除链接/删除</button>
+        </div>
+        <button class="neumo-btn neumo-btn-ghost" id="btnCancelMenu" style="width: 100%;">取消</button>
+      </div>
+    </div>
+
+    <!-- 拟态 - 图片压缩选择弹窗 -->
+    <!-- 拟态 - 添加爱人弹窗 -->
+    <div class="neumo-modal-mask" id="addLoverModal" hidden>
+      <div class="neumo-card">
+        <div class="neumo-title">链接爱人</div>
+        <div class="neumo-upload-box" id="loverAvatarUploadBox">
+          <input type="file" id="loverAvatarInput" accept="image/*">
+          <div class="avatar-upload-inner" id="loverAvatarPreviewInner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8">
+              <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/>
+            </svg>
+          </div>
+        </div>
+        <input type="text" class="neumo-input" id="loverNameInput" placeholder="TA的昵称" maxlength="20">
+        <div class="neumo-btn-group">
+          <button class="neumo-btn neumo-btn-ghost" id="cancelLover">取消</button>
+          <button class="neumo-btn neumo-btn-primary" id="saveLover">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 拟态 - 创建小屋弹窗 -->
+    <div class="neumo-modal-mask" id="addGroupModal" hidden>
+      <div class="neumo-card">
+        <div class="neumo-title">创建爱的小屋</div>
+        <div class="neumo-upload-box" id="groupAvatarUploadBox">
+          <input type="file" id="groupAvatarInput" accept="image/*">
+          <div class="avatar-upload-inner" id="groupAvatarPreviewInner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/>
+            </svg>
+          </div>
+        </div>
+        <input type="text" class="neumo-input" id="groupNameInput" placeholder="小屋名称" maxlength="20">
+        <div style="font-size: 13px; color: #777; margin-bottom: 8px; font-weight:600;">选择成员</div>
+        <div class="member-grid" id="groupMemberGrid">
+          <!-- JS动态渲染 -->
+        </div>
+        <div class="neumo-btn-group">
+          <button class="neumo-btn neumo-btn-ghost" id="cancelGroup">取消</button>
+          <button class="neumo-btn neumo-btn-primary" id="saveGroup">创建</button>
+        </div>
+      </div>
+    </div>
+    <div class="neumo-modal-mask" id="compressModal" hidden>
+      <div class="neumo-card">
+        <div class="neumo-title">选择图片大小</div>
+        <div class="neumo-compress-list" id="compressList">
+          <!-- JS动态生成 -->
+        </div>
+        <button class="neumo-btn neumo-btn-ghost" id="cancelCompress" style="width: 100%;">取消</button>
+      </div>
+    </div>
+
+
+  </div>
+
+  <script>
+        // ===== 祝福守护系统 =====
+    (function() {
+      function checkBlessing() {
+        const blessing = document.getElementById('__blessing__');
+        const blessingComment = document.documentElement.outerHTML.includes('愿此生永不分离');
+        if (!blessing || !blessingComment) {
+          document.body.innerHTML = `<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#e6e6e6;font-family:sans-serif;color:#555;text-align:center;padding:20px;z-index:9999;"><div style="background:#fff;padding:40px 30px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.1);max-width:300px;"><div style="font-size:40px;margin-bottom:16px;">✦</div><h2 style="font-size:18px;color:#111;margin-bottom:12px;">祝福消失了</h2><p style="font-size:13px;line-height:1.6;">这个世界由爱与祝福构建。<br>请恢复代码中的祝福文字。</p></div></div>`;
+          document.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); }, true);
+          return false;
+        }
+        return true;
+      }
+      if (!checkBlessing()) throw new Error('Blessing missing');
+      setInterval(checkBlessing, 10000);
+    })();
+
+    // ===== 数据层 =====
+    const Storage = {
+      get(key, def = null) { try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : def; } catch { return def; } },
+      set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.error(e); } }
+    };
+
+    // 增加 bgOpacity 默认值
+    let userData = Storage.get('userData', { name: '我', avatar: '', bgImage: '', bgOpacity: 100 });
+    let lovers = Storage.get('lovers', []);
+    let groups = Storage.get('groups', []);
+    let tempLoverAvatarUrl = null;
+    let tempGroupAvatarUrl = null;
+
+    // ===== 工具函数 =====
+    const $ = id => document.getElementById(id);
+    const showModal = id => $(id).hidden = false;
+    const hideModal = id => $(id).hidden = true;
+    const genId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
+
+    // 拟态提示/确认框
+    window.showSysAlert = function(msg, isConfirm, onConfirm) {
+      $('sysAlertMsg').textContent = msg;
+      const btnGroup = $('sysAlertBtnGroup');
+      
+      if (isConfirm) {
+        btnGroup.innerHTML = `
+          <button class="neumo-btn neumo-btn-ghost" onclick="document.getElementById('sysAlertModal').hidden=true">取消</button>
+          <button class="neumo-btn neumo-btn-primary" id="sysAlertConfirmBtn">确定</button>
+        `;
+        $('sysAlertConfirmBtn').onclick = () => {
+          hideModal('sysAlertModal');
+          if (onConfirm) onConfirm();
+        };
+      } else {
+        btnGroup.innerHTML = `
+          <button class="neumo-btn neumo-btn-primary" onclick="document.getElementById('sysAlertModal').hidden=true">我知道了</button>
+        `;
+      }
+      showModal('sysAlertModal');
+    };
+      
+    // 读取图片
+    function readImageFile(file, cb) {
+      if (!file || !file.type.startsWith('image/')) return;
+      const r = new FileReader();
+      r.onload = e => cb(e.target.result);
+      r.readAsDataURL(file);
+    }
+
+    // 图片压缩核心逻辑
+    function compressImage(file, maxSizeKB, callback) {
+      if (file.size / 1024 <= maxSizeKB) { readImageFile(file, callback); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          let ratio = Math.sqrt((maxSizeKB * 1024) / file.size);
+          canvas.width = width * ratio;
+          canvas.height = height * ratio;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          callback(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 拟态图片压缩选择器
+    let pendingFile = null;
+    let pendingCallback = null;
+    function openCompressDialog(file, callback) {
+      pendingFile = file;
+      pendingCallback = callback;
+      const list = $('compressList');
+      const realSize = (file.size / 1024).toFixed(0);
+      
+      // 计算理论压缩大小
+      const sizes = [
+        { label: '小', kb: 25 },
+        { label: '中', kb: 78 },
+        { label: '大', kb: 248 },
+        { label: '实际大小', kb: file.size / 1024 }
+      ];
+
+      list.innerHTML = sizes.map(s => `
+        <div class="neumo-compress-item" data-kb="${s.kb}">
+          <span>${s.label}</span>
+          <span>(${s.kb === file.size / 1024 ? realSize : s.kb} KB)</span>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.neumo-compress-item').forEach(item => {
+        item.addEventListener('click', function() {
+          list.querySelectorAll('.neumo-compress-item').forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+          const targetKB = parseFloat(this.dataset.kb);
+          
+          setTimeout(() => {
+            compressImage(pendingFile, targetKB, (dataUrl) => {
+              pendingCallback(dataUrl);
+              hideModal('compressModal');
+              pendingFile = null;
+              pendingCallback = null;
+            });
+          }, 150);
+        });
+      });
+      showModal('compressModal');
+    }
+
+    // ===== 渲染主页信息 =====
+    function renderProfile() {
+      $('myNameBtn').textContent = userData.name;
+      
+      const inner = $('myAvatarInner');
+      if (userData.avatar) {
+        inner.innerHTML = `<img src="${userData.avatar}" alt="头像">`;
+      } else {
+        inner.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
+      }
+
+      const card = $('profileCard');
+      const bgLayer = $('profileBgLayer');
+      if (userData.bgImage) {
+        bgLayer.style.backgroundImage = `url(${userData.bgImage})`;
+        bgLayer.style.opacity = (userData.bgOpacity !== undefined ? userData.bgOpacity : 100) / 100;
+        card.classList.add('has-bg');
+      } else {
+        bgLayer.style.backgroundImage = '';
+        card.classList.remove('has-bg');
+      }
+    }
+
+    // ===== 渲染列表 =====
+    function renderLovers() {
+      const c = $('loverList');
+      if (lovers.length === 0) {
+        c.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><div>还没有与爱人链接<br>点击右上角「+」开始链接</div></div>`;
+        return;
+      }
+      // 倒序排列，最新的在最下（数组push时是末尾）
+      c.innerHTML = lovers.map(l => `
+        <div class="chat-list-item" data-id="${l.id}" onclick="window.location.href='lover-home.html?id=${l.id}'">
+          <div class="chat-avatar-wrap">
+            ${l.avatar ? `<img src="${l.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`}
+          </div>
+          <div class="chat-info">
+            <div class="chat-name">${l.name}</div>
+            <div class="chat-preview">点击开始聊天</div>
+          </div>
+          <div class="chat-right">
+            <div class="chat-time">${new Date(l.createdAt).getHours().toString().padStart(2,'0')}:${new Date(l.createdAt).getMinutes().toString().padStart(2,'0')}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderGroups() {
+      const c = $('groupList');
+      if (groups.length === 0) {
+        c.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/></svg><div>还没有建立爱的小屋<br>点击右上角「+」创建小屋</div></div>`;
+        return;
+      }
+      c.innerHTML = groups.map(g => {
+        // 提取前4个成员头像用于九宫格展示
+                let avatarsHtml = '';
+        if (g.avatar) {
+           avatarsHtml = `<img src="${g.avatar}">`;
+        } else {
+           const membersData = g.members.map(id => lovers.find(l => l.id === id)).filter(Boolean);
+           const showMembers = membersData.slice(0, 4);
+           if (showMembers.length === 0) {
+             // 极端情况全被删了
+             avatarsHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>`;
+           } else {
+             avatarsHtml = showMembers.map(m => m.avatar ? `<img src="${m.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8" style="width:50%;height:50%;"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`).join('');
+           }
+        }
+
+        return `
+        <div class="chat-list-item" data-id="${g.id}" onclick="window.location.href='#group_${g.id}'">
+          <div class="chat-avatar-wrap group">
+            ${avatarsHtml}
+          </div>
+          <div class="chat-info">
+            <div class="chat-name">${g.name}</div>
+            <div class="chat-preview">${g.members.length} 位成员</div>
+          </div>
+          <div class="chat-right">
+            <div class="chat-time">${new Date(g.createdAt).getHours().toString().padStart(2,'0')}:${new Date(g.createdAt).getMinutes().toString().padStart(2,'0')}</div>
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    // ===== 底部导航切换 =====
+    document.querySelectorAll('.tab-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.page').forEach(p => p.hidden = true);
+        $(`page-${btn.dataset.page}`).hidden = false;
+        document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    // ===== 个人卡片交互拆分 =====
+    // 1. 点击头像
+    $('myAvatarBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      showModal('editAvatarModal');
+      const preview = $('avatarPreviewInner');
+      preview.innerHTML = userData.avatar ? `<img src="${userData.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
+    });
+
+    // 2. 点击昵称
+    $('myNameBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      showModal('editNameModal');
+      $('nameInput').value = userData.name;
+    });
+
+        // 3. 点击卡片背景
+    $('profileCard').addEventListener('click', () => {
+      showModal('setBgModal');
+      const previewLayer = $('bgPreviewLayer');
+      const previewText = $('bgPreviewInner').querySelector('span');
+      
+      if (userData.bgImage) {
+        previewLayer.style.backgroundImage = `url(${userData.bgImage})`;
+        previewLayer.style.opacity = (userData.bgOpacity !== undefined ? userData.bgOpacity : 100) / 100; // 同步小图透明度
+        previewText.style.display = 'none';
+        $('bgOpacitySlider').value = userData.bgOpacity !== undefined ? userData.bgOpacity : 100;
+      } else {
+        previewLayer.style.backgroundImage = '';
+        previewText.style.display = 'block';
+        $('bgOpacitySlider').value = 100;
+      }
+    });
+
+    // ===== 头像上传与保存 =====
+    let tempAvatarUrl = null;
+    $('avatarInput').addEventListener('change', function() {
+      if (this.files[0]) {
+        openCompressDialog(this.files[0], (dataUrl) => {
+          tempAvatarUrl = dataUrl;
+          $('avatarPreviewInner').innerHTML = `<img src="${dataUrl}">`;
+        });
+      }
+      this.value = '';
+    });
+
+    $('cancelAvatar').addEventListener('click', () => { hideModal('editAvatarModal'); tempAvatarUrl = null; });
+    $('saveAvatar').addEventListener('click', () => {
+      if (tempAvatarUrl) {
+        userData.avatar = tempAvatarUrl;
+        Storage.set('userData', userData);
+        renderProfile();
+      }
+      hideModal('editAvatarModal');
+      tempAvatarUrl = null;
+    });
+
+    // ===== 昵称保存 =====
+    $('cancelName').addEventListener('click', () => hideModal('editNameModal'));
+    $('saveName').addEventListener('click', () => {
+      const name = $('nameInput').value.trim() || '我';
+      userData.name = name;
+      Storage.set('userData', userData);
+      renderProfile();
+      hideModal('editNameModal');
+    });
+
+       // ===== 背景上传与透明度实时预览 =====
+    let tempBgUrl = null;
+    $('bgInput').addEventListener('change', function() {
+      if (this.files[0]) {
+        openCompressDialog(this.files[0], (dataUrl) => {
+          tempBgUrl = dataUrl;
+          const previewLayer = $('bgPreviewLayer');
+          const previewText = $('bgPreviewInner').querySelector('span');
+          
+          previewLayer.style.backgroundImage = `url(${dataUrl})`;
+          previewText.style.display = 'none';
+          
+          // 实时预览主页卡片
+          $('profileBgLayer').style.backgroundImage = `url(${dataUrl})`;
+          $('profileBgLayer').style.opacity = $('bgOpacitySlider').value / 100;
+          $('profileCard').classList.add('has-bg');
+          
+          // 实时预览小图（同步透明度）
+          previewLayer.style.opacity = $('bgOpacitySlider').value / 100;
+        });
+      }
+      this.value = '';
+    });
+
+    // 拖动滑块实时预览（同步主页卡片和小图）
+    $('bgOpacitySlider').addEventListener('input', function() {
+      const opacityVal = this.value / 100;
+      $('profileBgLayer').style.opacity = opacityVal;
+      $('bgPreviewLayer').style.opacity = opacityVal; // 新增：小图也同步变化
+    });
+
+    $('clearBg').addEventListener('click', () => {
+      tempBgUrl = null;
+      const previewLayer = $('bgPreviewLayer');
+      const previewText = $('bgPreviewInner').querySelector('span');
+      
+      previewLayer.style.backgroundImage = '';
+      previewText.style.display = 'block';
+      
+      // 清除预览
+      $('profileBgLayer').style.backgroundImage = '';
+      $('profileCard').classList.remove('has-bg');
+      // 直接保存清除状态
+      userData.bgImage = '';
+      userData.bgOpacity = 100;
+      Storage.set('userData', userData);
+      hideModal('setBgModal');
+    });
+
+      // ===== 保存背景与透明度 =====
+    $('saveBg').addEventListener('click', () => {
+      // 如果刚才上传了新图片，更新图片数据
+      if (tempBgUrl) {
+        userData.bgImage = tempBgUrl;
+      }
+      // 获取当前滑块的值并保存
+      userData.bgOpacity = parseInt($('bgOpacitySlider').value);
+      
+      // 存入缓存
+      Storage.set('userData', userData);
+      
+      // 重新渲染主页卡片（以应用最终的透明度和背景图）
+      renderProfile();
+      
+      // 关闭弹窗
+      hideModal('setBgModal');
+      
+      // 清空临时变量
+      tempBgUrl = null;
+    });
+ 
+        // ===== 添加爱人 =====
+    $('addLoverBtn').addEventListener('click', () => {
+      showModal('addLoverModal');
+      $('loverNameInput').value = '';
+      tempLoverAvatarUrl = null;
+      $('loverAvatarPreviewInner').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
+    });
+    $('loverAvatarInput').addEventListener('change', function() {
+      if (this.files[0]) {
+        openCompressDialog(this.files[0], (dataUrl) => {
+          tempLoverAvatarUrl = dataUrl;
+          $('loverAvatarPreviewInner').innerHTML = `<img src="${dataUrl}">`;
+        });
+      }
+      this.value = '';
+    });
+        $('cancelLover').addEventListener('click', () => { 
+      hideModal('addLoverModal'); 
+      $('addLoverModal').dataset.editId = '';
+      $('addLoverModal').querySelector('.neumo-title').textContent = '链接爱人';
+    });
+
+    $('saveLover').addEventListener('click', () => {
+      const name = $('loverNameInput').value.trim();
+      if (!name) return showSysAlert('请输入昵称', false);
+      
+      const editId = $('addLoverModal').dataset.editId;
+      if (editId) {
+        // 编辑
+        const item = lovers.find(l => l.id === editId);
+        if (item) {
+          item.name = name;
+          item.avatar = tempLoverAvatarUrl;
+        }
+      } else {
+        // 新建
+        lovers.push({ id: genId(), name, avatar: tempLoverAvatarUrl, createdAt: Date.now() });
+      }
+      
+      Storage.set('lovers', lovers); 
+      renderLovers(); 
+      hideModal('addLoverModal');
+      $('addLoverModal').dataset.editId = '';
+      $('addLoverModal').querySelector('.neumo-title').textContent = '链接爱人';
+    });
+
+    // ===== 创建小屋 =====
+    $('addGroupBtn').addEventListener('click', () => {
+      if (lovers.length === 0) {
+        // 用拟态提示代替 alert
+        showSysAlert('需要先与爱人链接，才能创建小屋哦', false);
+        return;
+      }
+      showModal('addGroupModal');
+      $('groupNameInput').value = '';
+      tempGroupAvatarUrl = null;
+      $('groupAvatarPreviewInner').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/></svg>`;
+      
+      // 渲染成员选择区
+      const grid = $('groupMemberGrid');
+      grid.innerHTML = lovers.map(l => `
+        <div class="member-select-item" data-id="${l.id}">
+          <div class="ms-avatar">${l.avatar ? `<img src="${l.avatar}">` : ''}</div>
+          <div class="ms-name">${l.name}</div>
+        </div>
+      `).join('');
+      
+      // 绑定多选事件
+      grid.querySelectorAll('.member-select-item').forEach(item => {
+        item.addEventListener('click', () => {
+          item.classList.toggle('selected');
+        });
+      });
+    });
+
+    $('groupAvatarInput').addEventListener('change', function() {
+      if (this.files[0]) {
+        openCompressDialog(this.files[0], (dataUrl) => {
+          tempGroupAvatarUrl = dataUrl;
+          $('groupAvatarPreviewInner').innerHTML = `<img src="${dataUrl}">`;
+        });
+      }
+      this.value = '';
+    });
+    $('cancelGroup').addEventListener('click', () => hideModal('addGroupModal'));
+    $('saveGroup').addEventListener('click', () => {
+      const name = $('groupNameInput').value.trim();
+      if (!name) return showSysAlert('请输入小屋名称', false);
+      
+      const selectedIds = Array.from(document.querySelectorAll('#groupMemberGrid .member-select-item.selected')).map(el => el.dataset.id);
+      if (selectedIds.length === 0) return showSysAlert('请至少选择一位成员', false);
+      
+      groups.push({ id: genId(), name, members: selectedIds, avatar: tempGroupAvatarUrl, createdAt: Date.now() });
+      Storage.set('groups', groups); 
+      renderGroups(); 
+      hideModal('addGroupModal');
+    });
+
+    // ===== 初始化 =====
+       // ===== 长按操作（爱人与群聊通用） =====
+    let pressTimer = null;
+    let currentLongPressItem = null; // { type: 'lover' | 'group', id: '...', name: '...' }
+
+    function bindLongPress(containerId, type) {
+      const container = $(containerId);
+      if (!container) return;
+
+      const startPress = (e) => {
+        const card = e.target.closest('.chat-list-item');
+        if (!card) return;
+        
+        pressTimer = setTimeout(() => {
+          if (navigator.vibrate) navigator.vibrate(30); // 震动反馈
+          
+          // 直接从卡片的 data-id 拿数据（100%精准）
+          const id = card.dataset.id;
+          const name = card.querySelector('.chat-name').textContent;
+
+          if (id) {
+            currentLongPressItem = { type, id, name };
+            $('actionMenuTitle').textContent = type === 'lover' ? `与「${name}」的操作` : `对「${name}」的操作`;
+            showModal('actionMenuModal');
+          }
+        }, 800);
+      };
+
+      const cancelPress = () => { clearTimeout(pressTimer); };
+
+      container.addEventListener('mousedown', startPress);
+      container.addEventListener('touchstart', startPress, {passive: false});
+      container.addEventListener('contextmenu', (e) => e.preventDefault()); // 禁止手机长按弹出菜单
+      
+      container.addEventListener('mouseup', cancelPress);
+      container.addEventListener('mouseleave', cancelPress);
+      container.addEventListener('touchend', cancelPress);
+    }
+
+    // 绑定爱人和群聊的长按事件
+    bindLongPress('loverList', 'lover');
+    bindLongPress('groupList', 'group');
+
+    // 操作菜单按钮事件
+    $('btnCancelMenu').onclick = () => { hideModal('actionMenuModal'); currentLongPressItem = null; };
+    
+    // 删除操作
+    $('btnDeleteItem').onclick = () => {
+      if (!currentLongPressItem) return;
+      const { type, id } = currentLongPressItem;
+      
+      showSysAlert(type === 'lover' ? '确定要解除与TA的链接吗？' : '确定要解散这个小屋吗？', true, () => {
+        if (type === 'lover') {
+          lovers = lovers.filter(l => l.id !== id);
+          Storage.set('lovers', lovers);
+          // 同步把所有群聊里的这个人删掉
+          groups.forEach(g => { g.members = g.members.filter(mid => mid !== id); });
+          groups = groups.filter(g => g.members.length > 0);
+          Storage.set('groups', groups);
+          renderLovers();
+          renderGroups();
+        } else {
+          groups = groups.filter(g => g.id !== id);
+          Storage.set('groups', groups);
+          renderGroups();
+        }
+      });
+      hideModal('actionMenuModal');
+    };
+
+    // 编辑操作
+    $('btnEditItem').onclick = () => {
+      if (!currentLongPressItem) return;
+      const { type, id } = currentLongPressItem;
+      
+      if (type === 'lover') {
+        const item = lovers.find(l => l.id === id);
+        if (item) {
+          $('loverNameInput').value = item.name;
+          tempLoverAvatarUrl = item.avatar || null;
+          $('loverAvatarPreviewInner').innerHTML = item.avatar ? `<img src="${item.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
+          $('addLoverModal').dataset.editId = id; // 标记当前是编辑状态
+          $('addLoverModal').querySelector('.neumo-title').textContent = '编辑爱人';
+          showModal('addLoverModal');
+        }
+      } else {
+        const item = groups.find(g => g.id === id);
+        if (item) {
+          $('groupNameInput').value = item.name;
+          tempGroupAvatarUrl = item.avatar || null;
+          $('groupAvatarPreviewInner').innerHTML = item.avatar ? `<img src="${item.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/></svg>`;
+          
+          // 渲染成员并勾选已有成员
+          const grid = $('groupMemberGrid');
+          grid.innerHTML = lovers.map(l => `
+            <div class="member-select-item ${item.members.includes(l.id) ? 'selected' : ''}" data-id="${l.id}">
+              <div class="ms-avatar">${l.avatar ? `<img src="${l.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><circle cx="12" cy="8" r="4"/></svg>`}</div>
+              <div class="ms-name">${l.name}</div>
+            </div>
+          `).join('');
+          grid.querySelectorAll('.member-select-item').forEach(el => {
+            el.addEventListener('click', () => el.classList.toggle('selected'));
+          });
+          
+          $('addGroupModal').dataset.editId = id;
+          $('addGroupModal').querySelector('.neumo-title').textContent = '编辑小屋';
+          showModal('addGroupModal');
+        }
+      }
+      hideModal('actionMenuModal');
+    };
+    renderProfile();
+    renderLovers();
+    renderGroups();
+  </script>
+  </div>
+</body>
+</html>
