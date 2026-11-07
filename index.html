@@ -57,9 +57,10 @@
      /* 调整状态栏布局，让文字绝对居中 */
     .status-bar {
       display: flex;
-      justify-content: center; /* 改为居中 */
+      justify-content: center; 
       align-items: center;
-      padding: 14px 20px 10px;
+      /* 关键：增加顶部安全区，自适应刘海屏 */
+      padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 10px; 
       background: var(--phone-bg);
       z-index: 10;
     }
@@ -793,6 +794,13 @@
     @media (max-width: 428px) { 
       .neumo-card { padding: 30px 24px; } 
       .neumo-title { font-size: 20px; } 
+    }
+
+    /* 仅针对手机端全屏模式调整 */
+    @media (max-width: 428px) {
+      .phone-frame {
+        padding-top: 10px; /* 让整体再往下沉一点点 */
+      }
     }
 
   </style>

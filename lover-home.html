@@ -65,7 +65,8 @@
       flex-shrink: 0;
       scroll-snap-align: center;
       overflow-y: auto;
-      padding: 24px 16px;
+      /* 关键：把原来的 24px 换成 calc 计算，自动避开刘海 */
+      padding: calc(24px + env(safe-area-inset-top, 0px)) 16px 24px;
       scrollbar-width: none;
     }
     .page::-webkit-scrollbar { display: none; }
@@ -321,6 +322,14 @@
       .input-bar .input-placeholder { font-size: 15px; }
     }
    }
+
+      /* 仅针对手机端全屏模式调整 */
+    @media (max-width: 430px) {
+      .collage-section {
+        margin-top: 30px; /* 让拼贴相册区再往下走一点，避免顶头 */
+      }
+    }
+
   </style>
 </head>
 <body>
