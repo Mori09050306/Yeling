@@ -325,10 +325,25 @@
     }
    }
 
-      /* 仅针对手机端全屏模式调整 */
+     /* 仅针对手机端全屏模式调整 */
     @media (max-width: 430px) {
       .collage-section {
         margin-top: 30px; /* 让拼贴相册区再往下走一点，避免顶头 */
+      }
+      
+      /* ====== 新增：放大压缩弹窗的选项 ====== */
+      .neumo-compress-item {
+        padding: 20px 24px; /* 增加上下内边距，把行撑高 */
+        font-size: 17px;    /* 放大字号，看着更清晰 */
+      }
+      
+      #compressModal .neumo-title {
+        font-size: 22px; 
+        margin-bottom: 20px;
+      }
+      
+      .neumo-compress-list {
+        border-radius: 20px; /* 加大外框圆角 */
       }
     }
 
