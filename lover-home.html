@@ -637,21 +637,32 @@
       canvas.width = targetW;
       canvas.height = targetH;
 
-      const imgW = cropImageObj.offsetWidth;
-      const imgH = cropImageObj.offsetHeight;
-      const scaleX = cropImageObj.naturalWidth / imgW;
-      const scaleY = cropImageObj.naturalHeight / imgH;
+      // 1. 获取图片在容器中【未缩放】时的原始渲染尺寸
+      const baseImgW = cropImageObj.offsetWidth;
+      const baseImgH = cropImageObj.offsetHeight;
+      
+      // 2. 获取图片实际分辨率与渲染尺寸的比例
+      const scaleX = cropImageObj.naturalWidth / baseImgW;
+      const scaleY = cropImageObj.naturalHeight / baseImgH;
 
+      // 3. 获取白框的大小
       const boxW = cropBox.offsetWidth;
       const boxH = cropBox.offsetHeight;
 
-      // 核心公式：结合缩放、偏移、居中计算真实截取点
-      const startX = (imgW / 2 - boxW / 2 - imgX) / imgScale * scaleX;
-      const startY = (imgH / 2 - boxH / 2 - imgY) / imgScale * scaleY;
+      // 4. 核心修复：计算截取起点
+      // 因为图片放大了 imgScale 倍，且平移了 imgX、imgY
+      // (baseImgW * imgScale) 是图片放大后的视觉总宽度
+      const startX = ((baseImgW * imgScale / 2) - (boxW / 2) - imgX) / imgScale * scaleX;
+      const startY = ((baseImgH * imgScale / 2) - (boxH / 2) - imgY) / imgScale * scaleY;
 
+      // 5. 截取区域的原始尺寸
+      const sourceWidth = (boxW / imgScale) * scaleX;
+      const sourceHeight = (boxH / imgScale) * scaleY;
+
+      // 画图 (如果截取起点是负数，说明边缘超出了，默认填充为黑色，但这不应该发生)
       ctx.drawImage(
         cropImageObj,
-        startX, startY, (boxW / imgScale) * scaleX, (boxH / imgScale) * scaleY, 
+        Math.max(0, startX), Math.max(0, startY), sourceWidth, sourceHeight, 
         0, 0, targetW, targetH 
       );
 
