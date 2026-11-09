@@ -810,6 +810,143 @@
         border-radius: 20px;
       }
     }
+
+       /* ===== 新增：爱人迷你档案卡 (保留三列排版版) ===== */
+    .lover-archive-card {
+      background-color: #FFFFFF;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+      padding: 24px 20px 20px 20px; /* 上下左右留足空间 */
+      margin-bottom: 16px;
+      position: relative;
+      border: 1px solid rgba(0,0,0,0.02);
+      cursor: pointer;
+      transition: transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      flex-direction: column;
+    }
+    .lover-archive-card:active {
+      transform: scale(0.98);
+    }
+
+    /* 三列布局，拉宽 */
+    .lac-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 24px; /* 给底部留出空间 */
+    }
+
+    /* 左右列通用 */
+    .lac-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px; /* 01和02之间的间距放开 */
+    }
+    
+    .lac-column.left { align-items: flex-start; }
+    .lac-column.right { align-items: flex-start; padding-left: 12px; }
+
+    /* 中间列头像 (恢复大尺寸) */
+    .lac-center {
+      flex: none;
+      margin: 0 12px;
+    }
+
+    .lac-avatar {
+      width: 80px; 
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background-color: #fafafa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .lac-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .lac-avatar svg { width: 32px; height: 32px; stroke: #ccc; }
+
+    /* 每个区块的小标题 */
+    .lac-block {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+    
+    .lac-block-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .lac-num {
+      font-size: 11px;
+      color: #999;
+      font-family: Consolas, monospace;
+    }
+
+    .lac-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 70px;
+    }
+
+    /* 正文内容 */
+    .lac-text {
+      font-size: 13px;
+      color: #555;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 90px;
+    }
+
+    /* 极细分割线 */
+    .lac-divider {
+      border-bottom: 1px solid #eee;
+      width: 100%;
+      margin: 6px 0;
+    }
+
+    /* 底部：居中文字 + 右下角按钮 */
+    .lac-bottom {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      height: 24px;
+    }
+
+    .lac-footer-text {
+      font-size: 13px;
+      color: #111;
+      font-family: Consolas, monospace;
+    }
+
+    .lac-entry {
+      position: absolute;
+      right: 0;
+      font-size: 11px;
+      color: #555;
+      background-color: #f7f7f7;
+      padding: 6px 10px;
+      border-radius: 8px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .lover-archive-card:active .lac-entry {
+      background-color: #eee;
+    }
   </style>
   <!-- 告诉苹果系统这是一个全屏 App -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1261,26 +1398,74 @@
       }
     }
 
-    // ===== 渲染列表 =====
+    // ===== 渲染爱人列表 =====
     function renderLovers() {
       const c = $('loverList');
       if (lovers.length === 0) {
         c.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><div>还没有与爱人链接<br>点击右上角「+」开始链接</div></div>`;
         return;
       }
-      // 倒序排列，最新的在最下（数组push时是末尾）
-      c.innerHTML = lovers.map(l => `
-        <div class="chat-list-item" data-id="${l.id}" onclick="window.location.href='lover-home.html?id=${l.id}'">
-          <div class="chat-avatar-wrap">
-            ${l.avatar ? `<img src="${l.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`}
+      
+      c.innerHTML = lovers.map((l, index) => `
+        <div class="lover-archive-card" data-id="${l.id}" onclick="window.location.href='lover-home.html?id=${l.id}'">
+          
+          <div class="lac-content">
+            <!-- 左侧列：01 和 02 -->
+            <div class="lac-column left">
+              <div class="lac-block">
+                <div class="lac-block-header">
+                  <span class="lac-num">01</span>
+                  <span class="lac-title">${l.name}</span>
+                </div>
+                <div class="lac-divider"></div>
+                <div class="lac-text">档案信息</div>
+              </div>
+              
+              <div class="lac-block">
+                <div class="lac-block-header">
+                  <span class="lac-num">02</span>
+                  <span class="lac-title">属性</span>
+                </div>
+                <div class="lac-divider"></div>
+                <div class="lac-text">未定义</div>
+              </div>
+            </div>
+            
+            <!-- 中间列：头像 -->
+            <div class="lac-center">
+              <div class="lac-avatar">
+                ${l.avatar ? `<img src="${l.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`}
+              </div>
+            </div>
+            
+            <!-- 右侧列：03 和 04 -->
+            <div class="lac-column right">
+              <div class="lac-block">
+                <div class="lac-block-header">
+                  <span class="lac-num">03</span>
+                  <span class="lac-title">技能</span>
+                </div>
+                <div class="lac-divider"></div>
+                <div class="lac-text">未定义</div>
+              </div>
+              
+              <div class="lac-block">
+                <div class="lac-block-header">
+                  <span class="lac-num">04</span>
+                  <span class="lac-title">游戏</span>
+                </div>
+                <div class="lac-divider"></div>
+                <div class="lac-text">未定义</div>
+              </div>
+            </div>
           </div>
-          <div class="chat-info">
-            <div class="chat-name">${l.name}</div>
-            <div class="chat-preview">点击开始聊天</div>
+
+          <!-- 底部区域 -->
+          <div class="lac-bottom">
+            <div class="lac-footer-text">未定义</div>
+            <div class="lac-entry">信号已连接 · 进入主页 →</div>
           </div>
-          <div class="chat-right">
-            <div class="chat-time">${new Date(l.createdAt).getHours().toString().padStart(2,'0')}:${new Date(l.createdAt).getMinutes().toString().padStart(2,'0')}</div>
-          </div>
+
         </div>
       `).join('');
     }
