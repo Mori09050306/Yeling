@@ -790,6 +790,26 @@
     .edit-text:hover {
       opacity: 0.7;
     }
+
+    /* ===== 针对手机端：放大压缩弹窗的选项和文字 ===== */
+    @media (max-width: 428px) {
+      /* 放大列表项的高度和字号 */
+      .neumo-compress-item {
+        padding: 20px 24px;
+        font-size: 17px;
+      }
+      
+      /* 放大弹窗标题，和整体更协调 */
+      #compressModal .neumo-title {
+        font-size: 22px;
+        margin-bottom: 20px;
+      }
+      
+      /* 把列表外框的圆角稍微加大一点，更好看 */
+      .neumo-compress-list {
+        border-radius: 20px;
+      }
+    }
   </style>
   <!-- 告诉苹果系统这是一个全屏 App -->
   <meta name="apple-mobile-web-app-capable" content="yes">
