@@ -418,7 +418,7 @@
     </div>
   </div>
 
-  <!-- 拟态 - 图片裁剪弹窗 (修复了重复与尺寸计算) -->
+  <!-- 拟态 - 图片裁剪弹窗 (修复高亮与保存) -->
   <div class="neumo-modal-mask" id="cropModal" hidden style="z-index: 1000;">
     <div class="neumo-card" style="max-width: 340px;">
       <div class="neumo-title">拖动调整位置</div>
@@ -426,9 +426,9 @@
       <div id="cropContainer" style="width: 100%; height: 300px; overflow: hidden; position: relative; background: #e0e0e0; border-radius: 16px; margin-bottom: 20px; cursor: grab;">
         <img id="cropImage" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); user-select: none; -webkit-user-drag: none;">
         
-        <!-- 动态遮罩框，头像正方形，相册长方形 -->
-        <div style="position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 999px rgba(0,0,0,0.5);">
-          <div id="cropBox" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid #fff; border-radius: 4px;"></div>
+        <!-- 关键：利用超长阴影做出中间高亮、四周变暗的“镂空遮罩”效果 -->
+        <div style="position: absolute; inset: 0; pointer-events: none;">
+          <div id="cropBox" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);"></div>
         </div>
       </div>
 
@@ -489,7 +489,7 @@
     }
     renderUI();
 
-    // ===== 裁剪功能逻辑 =====
+    // ===== 裁剪功能逻辑 (彻底修复版) =====
     let cropImageObj = $('cropImage');
     let cropContainer = $('cropContainer');
     let cropBox = $('cropBox');
@@ -498,15 +498,32 @@
     let currentUploadTarget = ''; 
     let tempAvatarUrl = null;
 
+    // 核心计算：保证图片放大后，边缘一定能填满白框
+    function clampImagePosition() {
+      const imgW = cropImageObj.offsetWidth;
+      const imgH = cropImageObj.offsetHeight;
+      const boxW = cropBox.offsetWidth;
+      const boxH = cropBox.offsetHeight;
+      
+      // 允许的最大偏移量：让图片的边缘刚好贴到白框的边缘
+      const maxY = (imgH - boxH) / 2;
+      const minY = -(imgH - boxH) / 2;
+      const maxX = (imgW - boxW) / 2;
+      const minX = -(imgW - boxW) / 2;
+
+      if (currentY > maxY) currentY = maxY;
+      if (currentY < minY) currentY = minY;
+      if (currentX > maxX) currentX = maxX;
+      if (currentX < minX) currentX = minX;
+
+      cropImageObj.style.transform = `translate(calc(-50% + ${currentX}px), ${currentY}px)`;
+    }
+
     function initCropper() {
       const startDrag = (e) => {
         isDragging = true;
         startY = e.touches ? e.touches[0].clientY : e.clientY;
         startX = e.touches ? e.touches[0].clientX : e.clientX;
-        let style = window.getComputedStyle(cropImageObj);
-        let matrix = new DOMMatrixReadOnly(style.transform);
-        currentY = matrix.m42 || 0; 
-        currentX = matrix.m41 || 0;
       };
 
       const onDrag = (e) => {
@@ -516,33 +533,15 @@
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const deltaY = clientY - startY;
         const deltaX = clientX - startX;
-        let newY = currentY + deltaY;
-        let newX = currentX + deltaX;
 
-        // 边界限制
-        const imgH = cropImageObj.offsetHeight;
-        const imgW = cropImageObj.offsetWidth;
-        const containerH = cropContainer.offsetHeight;
-        const containerW = cropContainer.offsetWidth;
+        currentY += deltaY;
+        currentX += deltaX;
         
-        // 计算裁剪框的实际尺寸
-        const boxW = cropBox.offsetWidth;
-        const boxH = cropBox.offsetHeight;
+        clampImagePosition();
 
-        // Y轴限制 (确保图片边缘不跑出裁剪框)
-        const maxY = (imgH - boxH) / 2;
-        const minY = -(imgH - boxH) / 2;
-        if (newY > maxY) newY = maxY;
-        if (newY < minY) newY = minY;
-
-        // X轴限制
-        const maxX = (imgW - boxW) / 2;
-        const minX = -(imgW - boxW) / 2;
-        if (newX > maxX) newX = maxX;
-        if (newX < minX) newX = minX;
-
-        // 注意这里加了 translateX，并且同时应用了 X 和 Y 的偏移
-        cropImageObj.style.transform = `translate(calc(-50% + ${newX}px), ${newY}px)`;
+        // 更新起点，实现连续拖拽
+        startY = clientY;
+        startX = clientX;
       };
 
       const endDrag = () => { isDragging = false; };
@@ -556,42 +555,7 @@
     }
     initCropper();
 
-    // 1. 点击爱人头像
-    $('loverAvatarBtn').onclick = () => {
-      currentUploadTarget = 'lover';
-      $('avatarModalTitle').textContent = '更换爱人头像';
-      tempAvatarUrl = currentLover.avatar;
-      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
-      showModal('editAvatarModal');
-    };
-
-    // 2. 点击我的头像
-    $('myAvatarBtn').onclick = () => {
-      currentUploadTarget = 'my';
-      $('avatarModalTitle').textContent = '更换我的头像';
-      tempAvatarUrl = userData.avatar;
-      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
-      showModal('editAvatarModal');
-    };
-
-    // 3. 点击相册
-    $('polaroid0Btn').onclick = () => {
-      currentUploadTarget = 'p0';
-      $('avatarModalTitle').textContent = '更换相册照片 1';
-      tempAvatarUrl = homeData.p0;
-      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
-      showModal('editAvatarModal');
-    };
-
-    $('polaroid1Btn').onclick = () => {
-      currentUploadTarget = 'p1';
-      $('avatarModalTitle').textContent = '更换相册照片 2';
-      tempAvatarUrl = homeData.p1;
-      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
-      showModal('editAvatarModal');
-    };
-
-    // 弹窗内：选择文件（先进入裁剪）
+    // 点击选择文件
     $('avatarFileInput').onchange = function() {
       if (this.files[0]) {
         const reader = new FileReader();
@@ -599,29 +563,32 @@
           cropImageObj.src = e.target.result;
           
           cropImageObj.onload = () => {
-            // 根据是头像还是相册，调整裁剪框的尺寸
+            // 设置白框大小
             if (currentUploadTarget === 'my' || currentUploadTarget === 'lover') {
               cropBox.style.width = '140px';
               cropBox.style.height = '140px';
-              cropBox.style.borderRadius = '50%'; // 头像用圆形裁剪框
+              cropBox.style.borderRadius = '50%';
             } else {
               cropBox.style.width = '140px';
               cropBox.style.height = '165px';
-              cropBox.style.borderRadius = '4px'; // 相册用圆角矩形
+              cropBox.style.borderRadius = '4px';
             }
 
+            // 图片填满裁剪区
             const containerH = 300;
             const containerW = cropContainer.offsetWidth;
-            
             cropImageObj.style.width = containerW + 'px';
             cropImageObj.style.height = 'auto';
             
+            // 如果图片太扁，就按高度撑满
             if (cropImageObj.offsetHeight < containerH) {
               cropImageObj.style.height = containerH + 'px';
               cropImageObj.style.width = 'auto';
             }
             
-            cropImageObj.style.transform = `translate(-50%, 0)`;
+            // 重置位置并居中
+            currentY = 0; currentX = 0;
+            clampImagePosition();
             
             hideModal('editAvatarModal');
             showModal('cropModal');
@@ -638,7 +605,7 @@
       showModal('editAvatarModal');
     };
 
-    // 确认裁剪并压缩保存
+    // 确认裁剪 (精确计算版)
     $('confirmCropBtn').onclick = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -654,26 +621,24 @@
 
       const imgW = cropImageObj.offsetWidth;
       const imgH = cropImageObj.offsetHeight;
+      const naturalW = cropImageObj.naturalWidth;
+      const naturalH = cropImageObj.naturalHeight;
       
-      let style = window.getComputedStyle(cropImageObj);
-      let matrix = new DOMMatrixReadOnly(style.transform);
-      let currentTranslateY = matrix.m42 || 0;
-      let currentTranslateX = matrix.m41 || 0;
-
       const boxW = cropBox.offsetWidth;
       const boxH = cropBox.offsetHeight;
-      
-      // 换算为原图上的比例
-      const ratio = cropImageObj.naturalWidth / imgW;
-      
-      // 计算原图上的截取起始点
-      // 注意这里把 X 和 Y 的偏移都算进去了
-      const cropStartY = (cropContainer.offsetHeight / 2 - boxH / 2 - currentTranslateY) * ratio;
-      const cropStartX = (cropContainer.offsetWidth / 2 - boxW / 2 - currentTranslateX) * ratio;
 
+      // 计算缩放比例
+      const scaleX = naturalW / imgW;
+      const scaleY = naturalH / imgH;
+
+      // 因为图片被平移了，所以我们要用 (图片渲染尺寸/2 - 白框尺寸/2 - 当前的拖拽偏移) 来算出裁剪起点
+      const startX = ((imgW / 2) - (boxW / 2) - currentX) * scaleX;
+      const startY = ((imgH / 2) - (boxH / 2) - currentY) * scaleY;
+
+      // 绘制到画布
       ctx.drawImage(
         cropImageObj,
-        cropStartX, cropStartY, boxW * ratio, boxH * ratio,
+        startX, startY, boxW * scaleX, boxH * scaleY,
         0, 0, targetW, targetH 
       );
 
