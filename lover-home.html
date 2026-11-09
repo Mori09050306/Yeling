@@ -418,17 +418,19 @@
     </div>
   </div>
 
-  <!-- 拟态 - 图片裁剪弹窗 (修复了重复与尺寸计算) -->
+  <!-- 拟态 - 图片裁剪弹窗 -->
   <div class="neumo-modal-mask" id="cropModal" hidden style="z-index: 1000;">
     <div class="neumo-card" style="max-width: 340px;">
-      <div class="neumo-title">拖动调整位置</div>
+      <div class="neumo-title">拖动调整，双指缩放</div>
       
-      <div id="cropContainer" style="width: 100%; height: 300px; overflow: hidden; position: relative; background: #e0e0e0; border-radius: 16px; margin-bottom: 20px; cursor: grab;">
-        <img id="cropImage" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); user-select: none; -webkit-user-drag: none;">
+      <div id="cropContainer" style="width: 100%; height: 300px; overflow: hidden; position: relative; background: #111; border-radius: 16px; margin-bottom: 20px; cursor: grab; touch-action: none;">
         
-        <!-- 动态遮罩框，头像正方形，相册长方形 -->
-        <div style="position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 999px rgba(0,0,0,0.5);">
-          <div id="cropBox" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid #fff; border-radius: 4px;"></div>
+        <!-- 图片本体 -->
+        <img id="cropImage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); user-select: none; -webkit-user-drag: none; max-width: none; max-height: none;">
+        
+        <!-- 镂空遮罩层 (核心修复：利用超大阴影实现中间亮、四周暗) -->
+        <div style="position: absolute; inset: 0; pointer-events: none; background: transparent;">
+          <div id="cropBox" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65); border-radius: 4px;"></div>
         </div>
       </div>
 
@@ -449,10 +451,9 @@
   </div>
 
   <script>
+   // 滑动监听
     const container = document.querySelector('.swipe-container');
     const dots = document.querySelectorAll('.dot');
-
-    // 滑动监听
     container.addEventListener('scroll', () => {
       const pageIndex = Math.round(container.scrollLeft / container.clientWidth);
       dots.forEach((dot, index) => {
@@ -474,12 +475,9 @@
     currentLoverId = currentLover.id;
     
     let allHomeData = JSON.parse(localStorage.getItem('loverHomeData')) || {};
-    if (!allHomeData[currentLoverId]) {
-      allHomeData[currentLoverId] = { p0: '', p1: '' };
-    }
+    if (!allHomeData[currentLoverId]) { allHomeData[currentLoverId] = { p0: '', p1: '' }; }
     let homeData = allHomeData[currentLoverId];
 
-    // ===== 渲染初始状态 =====
     function renderUI() {
       if (currentLover.avatar) { $('loverAvatarImg').src = currentLover.avatar; $('loverAvatarImg').style.display = 'block'; } else { $('loverAvatarImg').style.display = 'none'; }
       if (currentLover.avatar) { $('chatTinyAvatarImg').src = currentLover.avatar; $('chatTinyAvatarImg').style.display = 'block'; } else { $('chatTinyAvatarImg').style.display = 'none'; }
@@ -489,127 +487,105 @@
     }
     renderUI();
 
-    // ===== 裁剪功能逻辑 =====
+    // ==========================================
+    // 终极图片裁剪引擎 (支持左右上下拖拽 & 双指缩放)
+    // ==========================================
     let cropImageObj = $('cropImage');
     let cropContainer = $('cropContainer');
     let cropBox = $('cropBox');
-    let isDragging = false;
-    let startY = 0, startX = 0, currentY = 0, currentX = 0;
     let currentUploadTarget = ''; 
     let tempAvatarUrl = null;
 
-    function initCropper() {
-      const startDrag = (e) => {
-        isDragging = true;
-        startY = e.touches ? e.touches[0].clientY : e.clientY;
-        startX = e.touches ? e.touches[0].clientX : e.clientX;
-        let style = window.getComputedStyle(cropImageObj);
-        let matrix = new DOMMatrixReadOnly(style.transform);
-        currentY = matrix.m42 || 0; 
-        currentX = matrix.m41 || 0;
-      };
+    let imgScale = 1;
+    let imgX = 0, imgY = 0;
+    let startX = 0, startY = 0;
+    let isDragging = false;
+    let initialDistance = 0;
 
-      const onDrag = (e) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const deltaY = clientY - startY;
-        const deltaX = clientX - startX;
-        let newY = currentY + deltaY;
-        let newX = currentX + deltaX;
-
-        // 边界限制
-        const imgH = cropImageObj.offsetHeight;
-        const imgW = cropImageObj.offsetWidth;
-        const containerH = cropContainer.offsetHeight;
-        const containerW = cropContainer.offsetWidth;
-        
-        // 计算裁剪框的实际尺寸
-        const boxW = cropBox.offsetWidth;
-        const boxH = cropBox.offsetHeight;
-
-        // Y轴限制 (确保图片边缘不跑出裁剪框)
-        const maxY = (imgH - boxH) / 2;
-        const minY = -(imgH - boxH) / 2;
-        if (newY > maxY) newY = maxY;
-        if (newY < minY) newY = minY;
-
-        // X轴限制
-        const maxX = (imgW - boxW) / 2;
-        const minX = -(imgW - boxW) / 2;
-        if (newX > maxX) newX = maxX;
-        if (newX < minX) newX = minX;
-
-        // 注意这里加了 translateX，并且同时应用了 X 和 Y 的偏移
-        cropImageObj.style.transform = `translate(calc(-50% + ${newX}px), ${newY}px)`;
-      };
-
-      const endDrag = () => { isDragging = false; };
-
-      cropContainer.addEventListener('mousedown', startDrag);
-      window.addEventListener('mousemove', onDrag);
-      window.addEventListener('mouseup', endDrag);
-      cropContainer.addEventListener('touchstart', startDrag, { passive: false });
-      window.addEventListener('touchmove', onDrag, { passive: false });
-      window.addEventListener('touchend', endDrag);
+    // 更新图片位置和缩放
+    function updateCropImage() {
+      cropImageObj.style.transform = `translate(calc(-50% + ${imgX}px), calc(-50% + ${imgY}px)) scale(${imgScale})`;
     }
-    initCropper();
 
-    // 1. 点击爱人头像
-    $('loverAvatarBtn').onclick = () => {
-      currentUploadTarget = 'lover';
-      $('avatarModalTitle').textContent = '更换爱人头像';
-      tempAvatarUrl = currentLover.avatar;
-      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
-      showModal('editAvatarModal');
-    };
+    // 限制拖动边界 (防止图片被拖出框外露出背景)
+    function clampPosition() {
+      const imgW = cropImageObj.offsetWidth * imgScale;
+      const imgH = cropImageObj.offsetHeight * imgScale;
+      const boxW = cropBox.offsetWidth;
+      const boxH = cropBox.offsetHeight;
 
-    // 2. 点击我的头像
-    $('myAvatarBtn').onclick = () => {
-      currentUploadTarget = 'my';
-      $('avatarModalTitle').textContent = '更换我的头像';
-      tempAvatarUrl = userData.avatar;
-      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
-      showModal('editAvatarModal');
-    };
+      const maxX = (imgW - boxW) / 2;
+      const maxY = (imgH - boxH) / 2;
 
-    // 3. 点击相册
-    $('polaroid0Btn').onclick = () => {
-      currentUploadTarget = 'p0';
-      $('avatarModalTitle').textContent = '更换相册照片 1';
-      tempAvatarUrl = homeData.p0;
-      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
-      showModal('editAvatarModal');
-    };
+      if (imgX > maxX) imgX = maxX;
+      if (imgX < -maxX) imgX = -maxX;
+      if (imgY > maxY) imgY = maxY;
+      if (imgY < -maxY) imgY = -maxY;
+    }
 
-    $('polaroid1Btn').onclick = () => {
-      currentUploadTarget = 'p1';
-      $('avatarModalTitle').textContent = '更换相册照片 2';
-      tempAvatarUrl = homeData.p1;
-      $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
-      showModal('editAvatarModal');
-    };
+    cropContainer.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX - imgX;
+        startY = e.touches[0].clientY - imgY;
+      } else if (e.touches.length === 2) {
+        initialDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: false });
 
-     // ==========================================
-    // 完美的裁剪逻辑与弹窗绑定 (请替换这最后一段)
-    // ==========================================
+    cropContainer.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && isDragging) {
+        imgX = e.touches[0].clientX - startX;
+        imgY = e.touches[0].clientY - startY;
+        clampPosition();
+        updateCropImage();
+      } else if (e.touches.length === 2) {
+        const distance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        imgScale = Math.max(1, Math.min(3, imgScale * (distance / initialDistance)));
+        initialDistance = distance;
+        clampPosition();
+        updateCropImage();
+      }
+    }, { passive: false });
 
-    // 打开弹窗的按钮点击事件
+    cropContainer.addEventListener('touchend', () => { isDragging = false; });
+
+    // 鼠标拖拽兼容 (电脑端)
+    cropContainer.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX - imgX;
+      startY = e.clientY - imgY;
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      imgX = e.clientX - startX;
+      imgY = e.clientY - startY;
+      clampPosition();
+      updateCropImage();
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+
+    // 点击头像/相册打开弹窗
     $('loverAvatarBtn').onclick = () => { currentUploadTarget = 'lover'; $('avatarModalTitle').textContent = '更换爱人头像'; tempAvatarUrl = currentLover.avatar; $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`; showModal('editAvatarModal'); };
     $('myAvatarBtn').onclick = () => { currentUploadTarget = 'my'; $('avatarModalTitle').textContent = '更换我的头像'; tempAvatarUrl = userData.avatar; $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`; showModal('editAvatarModal'); };
     $('polaroid0Btn').onclick = () => { currentUploadTarget = 'p0'; $('avatarModalTitle').textContent = '更换相册照片 1'; tempAvatarUrl = homeData.p0; $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`; showModal('editAvatarModal'); };
     $('polaroid1Btn').onclick = () => { currentUploadTarget = 'p1'; $('avatarModalTitle').textContent = '更换相册照片 2'; tempAvatarUrl = homeData.p1; $('avatarPreviewInner').innerHTML = tempAvatarUrl ? `<img src="${tempAvatarUrl}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`; showModal('editAvatarModal'); };
 
-    // 弹窗内：选择文件，并进入裁剪界面
+    // 选择文件并进入裁剪
     $('avatarFileInput').onchange = function() {
       if (this.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => {
           cropImageObj.src = e.target.result;
-          
           cropImageObj.onload = () => {
-            // 动态设置裁剪框：头像圆形，相册矩形
             if (currentUploadTarget === 'my' || currentUploadTarget === 'lover') {
               cropBox.style.width = '140px';
               cropBox.style.height = '140px';
@@ -623,7 +599,6 @@
             const containerH = 300;
             const containerW = cropContainer.offsetWidth;
             
-            // 自适应图片大小
             cropImageObj.style.width = containerW + 'px';
             cropImageObj.style.height = 'auto';
             if (cropImageObj.offsetHeight < containerH) {
@@ -631,9 +606,8 @@
               cropImageObj.style.width = 'auto';
             }
             
-            // 重置偏移量并居中
-            currentX = 0; currentY = 0;
-            cropImageObj.style.transform = `translate(calc(-50% + 0px), 0px)`;
+            imgScale = 1; imgX = 0; imgY = 0;
+            updateCropImage();
             
             hideModal('editAvatarModal');
             showModal('cropModal');
@@ -650,53 +624,45 @@
       showModal('editAvatarModal');
     };
 
-    // 确认裁剪 (核心修复：绝对精准的画布坐标计算)
+    // 确认裁剪 (精确坐标计算)
     $('confirmCropBtn').onclick = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
-      // 最终输出的清晰度
       let targetW = 400; 
       let targetH = 470; 
       if (currentUploadTarget === 'my' || currentUploadTarget === 'lover') {
         targetW = 300; targetH = 300; 
       }
-      
       canvas.width = targetW;
       canvas.height = targetH;
 
-      // 获取当前渲染尺寸和实际尺寸的比例
       const imgW = cropImageObj.offsetWidth;
       const imgH = cropImageObj.offsetHeight;
       const scaleX = cropImageObj.naturalWidth / imgW;
       const scaleY = cropImageObj.naturalHeight / imgH;
 
-      // 获取白框的大小
       const boxW = cropBox.offsetWidth;
       const boxH = cropBox.offsetHeight;
 
-      // 计算真正的截取坐标 (因为图片垂直居中，且被平移了 currentX 和 currentY)
-      const startX = ((imgW / 2) - (boxW / 2) - currentX) * scaleX;
-      const startY = ((imgH / 2) - (boxH / 2) - currentY) * scaleY;
+      // 核心公式：结合缩放、偏移、居中计算真实截取点
+      const startX = (imgW / 2 - boxW / 2 - imgX) / imgScale * scaleX;
+      const startY = (imgH / 2 - boxH / 2 - imgY) / imgScale * scaleY;
 
-      // 画图
       ctx.drawImage(
         cropImageObj,
-        startX, startY, boxW * scaleX, boxH * scaleY, 
+        startX, startY, (boxW / imgScale) * scaleX, (boxH / imgScale) * scaleY, 
         0, 0, targetW, targetH 
       );
 
-      // 导出为 DataURL
       tempAvatarUrl = canvas.toDataURL('image/jpeg', 0.85);
-      
-      // 更新预览框并切回保存界面
       $('avatarPreviewInner').innerHTML = `<img src="${tempAvatarUrl}">`;
       
       hideModal('cropModal');
       showModal('editAvatarModal');
     };
 
-    // 弹窗内：点击保存
+    // 保存按钮
     $('saveAvatarBtn').onclick = () => {
       if (currentUploadTarget === 'lover') {
         currentLover.avatar = tempAvatarUrl;
