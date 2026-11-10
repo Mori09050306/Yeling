@@ -54,10 +54,12 @@
     }
 
     /* 顶部状态栏模拟 */
+     /* 调整状态栏布局，让文字绝对居中 */
     .status-bar {
       display: flex;
       justify-content: center; 
       align-items: center;
+      /* 关键：增加顶部安全区，自适应刘海屏 */
       padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 10px; 
       background: var(--phone-bg);
       z-index: 10;
@@ -65,9 +67,9 @@
 
     /* 彩虹动态渐变文字样式 */
     .tagline-text {
-      font-size: 15px;
+      font-size: 15px; /* 和你原来的字号保持一致 */
       font-weight: 700;
-      letter-spacing: 4px;
+      letter-spacing: 4px; /* 增加字间距，像原文件那样有呼吸感 */
       background: linear-gradient(90deg, #f9a8b4, #f7c5a8, #f5d0a8, #c4d4a8, #a8c4d4, #c4a8d4, #f9a8b4);
       background-size: 300% 100%;
       -webkit-background-clip: text;
@@ -76,10 +78,22 @@
       animation: gradientMove 6s ease-in-out infinite;
     }
 
+    /* 渐变动画 */
     @keyframes gradientMove {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
+    }
+    .status-icons {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .status-icons svg {
+      height: 12px;
+      fill: currentColor;
     }
 
     /* 应用主容器 */
@@ -98,7 +112,7 @@
     }
     .page[hidden] { display: none; }
 
-    /* 全局滚动容器 */
+    /* 新增：全局滚动容器 */
     .main-scroll-container {
       flex: 1;
       overflow-y: auto;
@@ -107,7 +121,7 @@
       display: none;
     }
 
-    /* ===== 个人信息卡片 ===== */
+    /* ===== 个人信息卡片 (白底+灰边+头像灰圈) ===== */
     .profile-wrapper {
       padding: 12px 16px;
     }
@@ -120,7 +134,7 @@
       text-align: center;
       position: relative;
       cursor: pointer;
-      overflow: hidden;
+      overflow: hidden; /* 保证背景图不出界 */
       transition: transform 0.2s;
     }
     
@@ -128,6 +142,7 @@
       transform: scale(0.98);
     }
 
+    /* 确保所有内容在背景图之上 */
     .profile-content {
       position: relative;
       z-index: 2;
@@ -136,12 +151,13 @@
       align-items: center;
     }
 
+    /* 头像框：灰色圆圈永远在最外层 */
     .avatar-ring {
       width: 74px;
       height: 74px;
       border-radius: 50%;
-      border: 1px solid var(--border-gray);
-      padding: 3px;
+      border: 1px solid var(--border-gray); /* 细灰色圆环 */
+      padding: 3px; /* 内边距，让头像和灰圈隔开，不遮挡灰圈 */
       background: transparent;
       margin-bottom: 12px;
       cursor: pointer;
@@ -149,6 +165,7 @@
     }
     .avatar-ring:active { transform: scale(.95); }
 
+    /* 头像内部图片/默认图标 */
     .avatar-inner {
       width: 100%;
       height: 100%;
@@ -171,6 +188,7 @@
       object-fit: cover;
     }
 
+    /* 昵称小药丸 */
     .name-pill {
       padding: 4px 14px;
       background: #fff;
@@ -183,7 +201,7 @@
     }
 
     /* ===== 列表区 ===== */
-    .list-scroll {
+      .list-scroll {
       flex: none; 
       padding: 0 16px calc(16px + var(--safe-bottom));
       scrollbar-width: none;
@@ -238,6 +256,40 @@
       margin-bottom: 8px;
     }
 
+    /* 联系人卡片 */
+    .contact-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-gray);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .contact-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--border-gray);
+      padding: 2px;
+    }
+    .contact-avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #f0f0f0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .contact-avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+    .contact-info { flex: 1; min-width: 0; }
+    .contact-name { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+    .contact-msg { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
     /* ===== 底部导航栏 ===== */
     .tabbar {
       display: flex;
@@ -266,7 +318,7 @@
 
     /* ===== 弹窗样式 ===== */
     .modal-mask {
-      position: absolute;
+      position: absolute; /* 限制在手机框内 */
       inset: 0;
       background: rgba(0, 0, 0, .4);
       display: flex;
@@ -279,7 +331,97 @@
     .modal-mask[hidden] { display: none; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* 拟态极简风格弹窗 (Neumorphism) */
+    .modal-card {
+      width: 100%;
+      max-width: 300px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+    }
+
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+    .modal-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-gray);
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    .modal-input:focus { border-color: var(--ink); }
+    
+    .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .modal-btn-primary { background: var(--ink); color: #fff; }
+    .modal-btn-ghost { background: transparent; color: var(--soft-ink); border: 1px solid var(--border-gray); }
+
+    /* 头像上传小部件 */
+    .avatar-upload {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      border: 1px solid var(--border-gray);
+      padding: 2px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .avatar-upload-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #f0f0f0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .avatar-upload input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    /* 占位页 */
+    .placeholder-page {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+    }
+    .placeholder-page svg { width: 48px; height: 48px; stroke: #ccc; margin-bottom: 12px; }
+    .placeholder-page h2 { font-size: 16px; color: var(--ink); margin-bottom: 8px; }
+    .placeholder-page p { font-size: 13px; text-align: center; line-height: 1.6; }
+
+  /* 小屏手机适配：取消手机外壳，实现全屏平铺 */
+    @media (max-width: 428px) {
+      body { 
+        padding: 0; /* 去除页面四周的留白 */
+      }
+      .phone-frame {
+        max-width: 100%; /* 取消最大宽度限制 */
+        height: 100vh; /* 高度撑满屏幕 */
+        max-height: 100vh;
+        border-radius: 0; /* 去除圆角，变成直角全屏 */
+        box-shadow: none; /* 去除外壳阴影 */
+      }
+    }
+  /* ===== 拟态极简风格弹窗 (Neumorphism) ===== */
     .neumo-modal-mask {
       position: absolute;
       inset: 0;
@@ -321,13 +463,15 @@
       letter-spacing: 1px;
     }
 
+    /* 拟态输入框 */
+        /* 拟态输入框 */
     .neumo-input {
       width: 100%;
       padding: 14px 18px;
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.05); /* 增加极淡的灰色边缘，让框体更清晰 */
       border-radius: 16px;
       background: #f0f0f0;
-      box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.05), inset -2px -2px 5px #ffffff;
+      box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.05), inset -2px -2px 5px #ffffff; /* 调整内阴影，让凹陷感更细腻 */
       font-size: 15px;
       color: #111;
       outline: none;
@@ -336,10 +480,11 @@
       font-family: inherit;
     }
     .neumo-input:focus {
-      border-color: rgba(0, 0, 0, 0.15);
+      border-color: rgba(0, 0, 0, 0.15); /* 聚焦时边框稍微加深 */
       box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08), inset -4px -4px 8px #ffffff;
     }
 
+    /* 拟态按钮 */
     .neumo-btn-group {
       display: flex;
       gap: 16px;
@@ -365,16 +510,54 @@
       box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.06), inset -4px -4px 8px #ffffff;
       transform: scale(0.98);
     }
-    .neumo-btn-ghost {
-      background: #f0f0f0;
+        .neumo-btn-ghost {
+      background: #f0f0f0; /* 改为实色背景 */
       color: #777;
-      box-shadow: -4px -4px 10px #ffffff, 4px 4px 10px rgba(0, 0, 0, 0.08);
+      box-shadow: -4px -4px 10px #ffffff, 4px 4px 10px rgba(0, 0, 0, 0.08); /* 增加同样的拟态外阴影 */
     }
     .neumo-btn-ghost:active {
-      box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.06), inset -4px -4px 8px #ffffff;
+      box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.06), inset -4px -4px 8px #ffffff; /* 增加同样的按压内阴影 */
       transform: scale(0.98);
     }
 
+    /* 拟态滚动条容器 */
+    .neumo-slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 10px 4px;
+    }
+    .neumo-slider-icon {
+      font-size: 16px;
+      color: #888;
+    }
+
+    /* 拟态滑块 (Range) */
+    .neumo-range {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 12px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #111 0%, #fff 100%); /* 渐变轨道 */
+      outline: none;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2), inset -1px -1px 3px #fff;
+    }
+    .neumo-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      box-shadow: -2px -2px 6px #ffffff, 2px 2px 6px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .neumo-range::-webkit-slider-thumb:active {
+      transform: scale(1.1);
+    }
+
+    /* 拟态上传按钮 */
     .neumo-upload-box {
       width: 80px;
       height: 80px;
@@ -405,6 +588,7 @@
       z-index: 10;
     }
 
+    /* 图片压缩选择列表 */
     .neumo-compress-list {
       background: #f0f0f0;
       border-radius: 16px;
@@ -428,7 +612,7 @@
       color: #fff;
     }
 
-    /* ===== 群聊列表（保留原版） ===== */
+    /* ===== 聊天列表卡片（微信风格） ===== */
     .chat-list-item {
       display: flex;
       align-items: center;
@@ -440,17 +624,18 @@
       cursor: pointer;
       transition: background 0.2s;
       position: relative;
-      user-select: none;
-      -webkit-user-select: none;
+      user-select: none; /* 禁止选中文字 */
+      -webkit-user-select: none; /* 兼容苹果 iOS */
     }
     .chat-list-item:active {
       background: #f0f0f0;
     }
     
+    /* 头像 */
     .chat-avatar-wrap {
       width: 48px;
       height: 48px;
-      border-radius:  50%;
+      border-radius:  50%; /* 正圆形头像 */
       background: #e8e8e8;
       margin-right: 12px;
       position: relative;
@@ -460,8 +645,17 @@
       align-items: center;
       justify-content: center;
     }
-    .chat-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
-    .chat-avatar-wrap svg { width: 24px; height: 24px; stroke: #888; }
+    .chat-avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .chat-avatar-wrap svg {
+      width: 24px;
+      height: 24px;
+      stroke: #888;
+    }
+    /* 群聊头像特殊处理 */
     .chat-avatar-wrap.group {
       border-radius: 50%; 
       background: #e6e6e6;
@@ -476,6 +670,7 @@
       border-radius: 4px;
     }
 
+    /* 信息区 */
     .chat-info {
       flex: 1;
       min-width: 0;
@@ -500,6 +695,7 @@
       text-overflow: ellipsis;
     }
     
+    /* 右侧时间与角标 */
     .chat-right {
       display: flex;
       flex-direction: column;
@@ -511,6 +707,16 @@
       font-size: 11px;
       color: #b0b0b0;
       margin-bottom: 4px;
+    }
+    .chat-badge {
+      background: #ff3b30;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 10px;
+      min-width: 16px;
+      text-align: center;
     }
 
     /* 弹窗内的成员多选 */
@@ -559,162 +765,50 @@
       font-weight: 700;
     }
 
+    .chat-avatar-wrap svg { width: 24px; height: 24px; stroke: #888; flex-shrink: 0; }
+    .chat-avatar-wrap.group svg { width: 50%; height: 50%; }
+
     @keyframes slideUp {
       from { transform: translateY(100%); }
       to { transform: translateY(0); }
     }
 
-    /* ===== 小屏手机适配 ===== */
-    @media (max-width: 428px) {
-      body { padding: 0; }
-      .phone-frame {
-        max-width: 100%;
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-        box-shadow: none;
-        padding-top: 10px;
-      }
+    /* 针对手机端弹窗放大的样式 */
+    @media (max-width: 428px) { 
       .neumo-card { padding: 30px 24px; } 
       .neumo-title { font-size: 20px; } 
-      .neumo-compress-item { padding: 20px 24px; font-size: 17px; }
-      #compressModal .neumo-title { font-size: 22px; margin-bottom: 20px; }
-      .neumo-compress-list { border-radius: 20px; }
     }
 
-    .edit-text:hover { opacity: 0.7; }
-
-    /* ===== 新增：爱人档案大卡片 (保留三列排版，拉宽尺寸) ===== */
-    .lover-archive-card {
-      background-color: #FFFFFF;
-      border-radius: 20px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
-      padding: 24px 20px 20px 20px; 
-      margin-bottom: 16px;
-      position: relative;
-      border: 1px solid rgba(0,0,0,0.02);
-      cursor: pointer;
-      transition: transform 0.2s;
-      -webkit-tap-highlight-color: transparent;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    .lover-archive-card:active {
-      transform: scale(0.98);
+    /* 仅针对手机端全屏模式调整 */
+    @media (max-width: 428px) {
+      .phone-frame {
+        padding-top: 10px; /* 让整体再往下沉一点点 */
+      }
     }
 
-    /* 三列布局，拉宽 */
-    .lac-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      margin-bottom: 24px; 
+    /* 新增：可点击编辑的文本悬停效果 */
+    .edit-text:hover {
+      opacity: 0.7;
     }
 
-    .lac-column {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 16px; 
-    }
-    
-    .lac-column.left { align-items: flex-start; }
-    .lac-column.right { align-items: flex-start; padding-left: 12px; }
-
-    .lac-center {
-      flex: none;
-      margin: 0 12px;
-    }
-
-    .lac-avatar {
-      width: 80px; 
-      height: 80px;
-      border-radius: 50%;
-      border: 3px solid #fff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      background-color: #fafafa;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-    .lac-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .lac-avatar svg { width: 32px; height: 32px; stroke: #ccc; }
-
-    .lac-block {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-    }
-    
-    .lac-block-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
-    }
-
-    .lac-num {
-      font-size: 11px;
-      color: #999;
-      font-family: Consolas, monospace;
-    }
-
-    .lac-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #111;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 70px;
-    }
-
-    .lac-text {
-      font-size: 13px;
-      color: #555;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 90px;
-    }
-
-    .lac-divider {
-      border-bottom: 1px solid #eee;
-      width: 100%;
-      margin: 6px 0;
-    }
-
-    .lac-bottom {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      height: 24px;
-    }
-
-    .lac-footer-text {
-      font-size: 13px;
-      color: #111;
-      font-family: Consolas, monospace;
-    }
-
-    .lac-entry {
-      position: absolute;
-      right: 0;
-      font-size: 11px;
-      color: #555;
-      background-color: #f7f7f7;
-      padding: 6px 10px;
-      border-radius: 8px;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-    .lover-archive-card:active .lac-entry {
-      background-color: #eee;
+    /* ===== 针对手机端：放大压缩弹窗的选项和文字 ===== */
+    @media (max-width: 428px) {
+      /* 放大列表项的高度和字号 */
+      .neumo-compress-item {
+        padding: 20px 24px;
+        font-size: 17px;
+      }
+      
+      /* 放大弹窗标题，和整体更协调 */
+      #compressModal .neumo-title {
+        font-size: 22px;
+        margin-bottom: 20px;
+      }
+      
+      /* 把列表外框的圆角稍微加大一点，更好看 */
+      .neumo-compress-list {
+        border-radius: 20px;
+      }
     }
   </style>
   <!-- 告诉苹果系统这是一个全屏 App -->
@@ -739,7 +833,7 @@
     <div class="app">
       <!-- 主页 -->
       <div class="page" id="page-home">
-        <!-- 全局滚动容器 -->
+        <!-- 新增：全局滚动容器 -->
         <div class="main-scroll-container">
         
         <!-- 个人信息区域 -->
@@ -900,8 +994,7 @@
     </div>
 
     <!-- 弹窗放在手机壳内部，防止全屏偏移 -->
-    
-    <!-- 拟态 - 编辑昵称弹窗 -->
+        <!-- 拟态 - 编辑昵称弹窗 -->
     <div class="neumo-modal-mask" id="editNameModal" hidden>
       <div class="neumo-card">
         <div class="neumo-title">修改昵称</div>
@@ -933,6 +1026,7 @@
       </div>
     </div>
 
+
     <!-- 拟态 - 全局确认/提示弹窗 -->
     <div class="neumo-modal-mask" id="sysAlertModal" hidden style="z-index: 9999;">
       <div class="neumo-card">
@@ -956,6 +1050,7 @@
       </div>
     </div>
 
+    <!-- 拟态 - 图片压缩选择弹窗 -->
     <!-- 拟态 - 添加爱人弹窗 -->
     <div class="neumo-modal-mask" id="addLoverModal" hidden>
       <div class="neumo-card">
@@ -1008,6 +1103,7 @@
         <button class="neumo-btn neumo-btn-ghost" id="cancelCompress" style="width: 100%;">取消</button>
       </div>
     </div>
+
 
   </div>
 
@@ -1119,6 +1215,7 @@
       const list = $('compressList');
       const realSize = (file.size / 1024).toFixed(0);
       
+      // 计算理论压缩大小
       const sizes = [
         { label: '小', kb: 25 },
         { label: '中', kb: 78 },
@@ -1164,74 +1261,26 @@
       }
     }
 
-    // ===== 渲染爱人列表 (新版：档案卡) =====
+    // ===== 渲染列表 =====
     function renderLovers() {
       const c = $('loverList');
       if (lovers.length === 0) {
         c.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><div>还没有与爱人链接<br>点击右上角「+」开始链接</div></div>`;
         return;
       }
-      
-      c.innerHTML = lovers.map((l, index) => `
-        <div class="lover-archive-card" data-id="${l.id}" onclick="window.location.href='lover-home.html?id=${l.id}'">
-          
-          <div class="lac-content">
-            <!-- 左侧列：01 和 02 -->
-            <div class="lac-column left">
-              <div class="lac-block">
-                <div class="lac-block-header">
-                  <span class="lac-num">01</span>
-                  <span class="lac-title">${l.name}</span>
-                </div>
-                <div class="lac-divider"></div>
-                <div class="lac-text">档案信息</div>
-              </div>
-              
-              <div class="lac-block">
-                <div class="lac-block-header">
-                  <span class="lac-num">02</span>
-                  <span class="lac-title">属性</span>
-                </div>
-                <div class="lac-divider"></div>
-                <div class="lac-text">未定义</div>
-              </div>
-            </div>
-            
-            <!-- 中间列：头像 -->
-            <div class="lac-center">
-              <div class="lac-avatar">
-                ${l.avatar ? `<img src="${l.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`}
-              </div>
-            </div>
-            
-            <!-- 右侧列：03 和 04 -->
-            <div class="lac-column right">
-              <div class="lac-block">
-                <div class="lac-block-header">
-                  <span class="lac-num">03</span>
-                  <span class="lac-title">技能</span>
-                </div>
-                <div class="lac-divider"></div>
-                <div class="lac-text">未定义</div>
-              </div>
-              
-              <div class="lac-block">
-                <div class="lac-block-header">
-                  <span class="lac-num">04</span>
-                  <span class="lac-title">游戏</span>
-                </div>
-                <div class="lac-divider"></div>
-                <div class="lac-text">未定义</div>
-              </div>
-            </div>
+      // 倒序排列，最新的在最下（数组push时是末尾）
+      c.innerHTML = lovers.map(l => `
+        <div class="chat-list-item" data-id="${l.id}" onclick="window.location.href='lover-home.html?id=${l.id}'">
+          <div class="chat-avatar-wrap">
+            ${l.avatar ? `<img src="${l.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`}
           </div>
-
-          <!-- 底部区域 -->
-          <div class="lac-bottom">
-            <div class="lac-footer-text">未定义</div>
-            <div class="lac-entry">信号已连接 · 进入主页 →</div>
+          <div class="chat-info">
+            <div class="chat-name">${l.name}</div>
+            <div class="chat-preview">点击开始聊天</div>
           </div>
-
+          <div class="chat-right">
+            <div class="chat-time">${new Date(l.createdAt).getHours().toString().padStart(2,'0')}:${new Date(l.createdAt).getMinutes().toString().padStart(2,'0')}</div>
+          </div>
         </div>
       `).join('');
     }
@@ -1243,13 +1292,15 @@
         return;
       }
       c.innerHTML = groups.map(g => {
-        let avatarsHtml = '';
+        // 提取前4个成员头像用于九宫格展示
+                let avatarsHtml = '';
         if (g.avatar) {
            avatarsHtml = `<img src="${g.avatar}">`;
         } else {
            const membersData = g.members.map(id => lovers.find(l => l.id === id)).filter(Boolean);
            const showMembers = membersData.slice(0, 4);
            if (showMembers.length === 0) {
+             // 极端情况全被删了
              avatarsHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>`;
            } else {
              avatarsHtml = showMembers.map(m => m.avatar ? `<img src="${m.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8" style="width:50%;height:50%;"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`).join('');
@@ -1331,7 +1382,7 @@
       hideModal('editNameModal');
     });
  
-    // ===== 添加爱人 =====
+        // ===== 添加爱人 =====
     $('addLoverBtn').addEventListener('click', () => {
       showModal('addLoverModal');
       $('loverNameInput').value = '';
@@ -1347,7 +1398,7 @@
       }
       this.value = '';
     });
-    $('cancelLover').addEventListener('click', () => { 
+        $('cancelLover').addEventListener('click', () => { 
       hideModal('addLoverModal'); 
       $('addLoverModal').dataset.editId = '';
       $('addLoverModal').querySelector('.neumo-title').textContent = '链接爱人';
@@ -1380,6 +1431,7 @@
     // ===== 创建小屋 =====
     $('addGroupBtn').addEventListener('click', () => {
       if (lovers.length === 0) {
+        // 用拟态提示代替 alert
         showSysAlert('需要先与爱人链接，才能创建小屋哦', false);
         return;
       }
@@ -1429,25 +1481,24 @@
     });
 
     // ===== 初始化 =====
+       // ===== 长按操作（爱人与群聊通用） =====
     let pressTimer = null;
-    let currentLongPressItem = null;
+    let currentLongPressItem = null; // { type: 'lover' | 'group', id: '...', name: '...' }
 
     function bindLongPress(containerId, type) {
       const container = $(containerId);
       if (!container) return;
 
       const startPress = (e) => {
-        // 关键修改：同时兼容新卡片的 .lover-archive-card 和旧群聊的 .chat-list-item
-        const card = e.target.closest('.lover-archive-card') || e.target.closest('.chat-list-item');
+        const card = e.target.closest('.chat-list-item');
         if (!card) return;
         
         pressTimer = setTimeout(() => {
-          if (navigator.vibrate) navigator.vibrate(30);
+          if (navigator.vibrate) navigator.vibrate(30); // 震动反馈
           
+          // 直接从卡片的 data-id 拿数据（100%精准）
           const id = card.dataset.id;
-          // 兼容新卡片的标题类名 .lac-title 和旧群聊的 .chat-name
-          const titleEl = card.querySelector('.lac-title') || card.querySelector('.chat-name');
-          const name = titleEl ? titleEl.textContent : '未定义';
+          const name = card.querySelector('.chat-name').textContent;
 
           if (id) {
             currentLongPressItem = { type, id, name };
@@ -1461,7 +1512,7 @@
 
       container.addEventListener('mousedown', startPress);
       container.addEventListener('touchstart', startPress, {passive: false});
-      container.addEventListener('contextmenu', (e) => e.preventDefault());
+      container.addEventListener('contextmenu', (e) => e.preventDefault()); // 禁止手机长按弹出菜单
       
       container.addEventListener('mouseup', cancelPress);
       container.addEventListener('mouseleave', cancelPress);
@@ -1472,8 +1523,10 @@
     bindLongPress('loverList', 'lover');
     bindLongPress('groupList', 'group');
 
+    // 操作菜单按钮事件
     $('btnCancelMenu').onclick = () => { hideModal('actionMenuModal'); currentLongPressItem = null; };
     
+    // 删除操作
     $('btnDeleteItem').onclick = () => {
       if (!currentLongPressItem) return;
       const { type, id } = currentLongPressItem;
@@ -1482,6 +1535,7 @@
         if (type === 'lover') {
           lovers = lovers.filter(l => l.id !== id);
           Storage.set('lovers', lovers);
+          // 同步把所有群聊里的这个人删掉
           groups.forEach(g => { g.members = g.members.filter(mid => mid !== id); });
           groups = groups.filter(g => g.members.length > 0);
           Storage.set('groups', groups);
@@ -1496,6 +1550,7 @@
       hideModal('actionMenuModal');
     };
 
+    // 编辑操作
     $('btnEditItem').onclick = () => {
       if (!currentLongPressItem) return;
       const { type, id } = currentLongPressItem;
@@ -1506,7 +1561,7 @@
           $('loverNameInput').value = item.name;
           tempLoverAvatarUrl = item.avatar || null;
           $('loverAvatarPreviewInner').innerHTML = item.avatar ? `<img src="${item.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>`;
-          $('addLoverModal').dataset.editId = id;
+          $('addLoverModal').dataset.editId = id; // 标记当前是编辑状态
           $('addLoverModal').querySelector('.neumo-title').textContent = '编辑爱人';
           showModal('addLoverModal');
         }
@@ -1517,6 +1572,7 @@
           tempGroupAvatarUrl = item.avatar || null;
           $('groupAvatarPreviewInner').innerHTML = item.avatar ? `<img src="${item.avatar}">` : `<svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/></svg>`;
           
+          // 渲染成员并勾选已有成员
           const grid = $('groupMemberGrid');
           grid.innerHTML = lovers.map(l => `
             <div class="member-select-item ${item.members.includes(l.id) ? 'selected' : ''}" data-id="${l.id}">
@@ -1535,25 +1591,29 @@
       }
       hideModal('actionMenuModal');
     };
-   
-    // ==== 初始化 ====
+   // ==== 初始化 ====
     renderProfile();
     renderLovers();
     renderGroups();
 
     // ==== 解决从个人页返回时，首页不刷新同步数据的 Bug ====
+    // 1. 监听手机浏览器从后台切回前台、或者从缓存页返回的事件
     window.addEventListener('pageshow', function (e) {
+      // 如果是从缓存中恢复的（比如从个人页返回首页）
       if (e.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        // 重新从本地存储拉取最新数据
         userData = Storage.get('userData', { name: '我', avatar: '' });
         lovers = Storage.get('lovers', []);
         groups = Storage.get('groups', []);
         
+        // 重新渲染页面
         renderProfile();
         renderLovers();
         renderGroups();
       }
     });
 
+    // 2. 监听网页重新获得焦点（比如切出微信去选照片，再切回来）
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible') {
         userData = Storage.get('userData', { name: '我', avatar: '' });
@@ -1566,5 +1626,6 @@
       }
     });
   </script>
+  </div>
 </body>
 </html>
