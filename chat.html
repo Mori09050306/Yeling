@@ -1,0 +1,2718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#eeedef" />
+  <title>未定义</title>
+
+  <!-- 原聊天界面样式：保留原数值和规则顺序 -->
+  <style>
+    :root {
+      color-scheme: light;
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #e9e9eb;
+    }
+
+    button,
+    input {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button {
+      display: inline-grid;
+      place-items: center;
+      padding: 0;
+      color: inherit;
+      border: 0;
+      background: transparent;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 1px solid #8b8790;
+      outline-offset: 4px;
+    }
+
+    .svg-library {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .icon {
+      display: block;
+      width: 1.4em;
+      height: 1.4em;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: 0 0 auto;
+    }
+
+    /* 桌面背景 */
+    .stage {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      min-height: 100svh;
+      padding: 32px;
+      overflow: hidden;
+      background:
+        radial-gradient(
+          ellipse at 50% 35%,
+          rgba(255, 255, 255, .96),
+          transparent 58%
+        ),
+        linear-gradient(135deg, #eeeff0, #e4e4e7);
+    }
+
+    /* 等比手机外壳 */
+    .device {
+      position: relative;
+      width: min(408px, calc((100svh - 64px) * 408 / 872));
+      aspect-ratio: 408 / 872;
+      padding: 7px;
+      border: 1px solid #727276;
+      border-radius: 53px;
+      background: linear-gradient(145deg, #68686b, #262629 38%, #4d4d50);
+      box-shadow:
+        0 38px 85px -28px rgba(38, 38, 45, .38),
+        0 12px 26px -14px rgba(38, 38, 45, .28),
+        0 0 0 1px rgba(255, 255, 255, .85),
+        inset 0 0 0 2px rgba(230, 230, 234, .5),
+        inset 0 0 0 4px #222225;
+      container-type: inline-size;
+    }
+
+    .device::before,
+    .device::after {
+      content: "";
+      position: absolute;
+      width: 3px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #77777b, #b1b1b5, #68686d);
+    }
+
+    .device::before {
+      top: 126px;
+      left: -3px;
+      height: 28px;
+      box-shadow: 0 48px 0 #88888d, 0 87px 0 #88888d;
+    }
+
+    .device::after {
+      top: 188px;
+      right: -3px;
+      height: 63px;
+    }
+
+    /* 字号随桌面手机宽度一起缩放 */
+    .screen {
+      position: relative;
+      isolation: isolate;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 46px;
+      background: #eeedef;
+      color: #37353b;
+      font-size: 3.82cqw;
+      box-shadow:
+        0 0 0 1px #161619,
+        inset 0 0 0 1px rgba(255, 255, 255, .8);
+    }
+
+    /* 纯 CSS 底纹：淡灰、柔光、轻微的斜向层次 */
+    .screen::before {
+      content: "";
+      position: absolute;
+      z-index: -2;
+      inset: 0;
+      background:
+        radial-gradient(
+          ellipse at 4% 18%,
+          rgba(255, 255, 255, .9),
+          transparent 52%
+        ),
+        radial-gradient(
+          ellipse at 104% 57%,
+          rgba(214, 213, 219, .68),
+          transparent 57%
+        ),
+        linear-gradient(
+          126deg,
+          transparent 26%,
+          rgba(255, 255, 255, .37) 38%,
+          transparent 49%,
+          rgba(255, 255, 255, .26) 66%,
+          transparent 78%
+        ),
+        #eeedef;
+    }
+
+    .screen::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      opacity: .3;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        115deg,
+        transparent 0,
+        transparent 5px,
+        rgba(255, 255, 255, .26) 6px,
+        transparent 7px
+      );
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
+
+    /* 桌面模拟状态栏 */
+    .status-bar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 0 0 3.05em;
+      padding: .15em 1.65em 0;
+      background: rgba(255, 255, 255, .58);
+    }
+
+    .status-label {
+      font-size: .71em;
+      font-weight: 600;
+      letter-spacing: .04em;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: .35em;
+    }
+
+    .status-icons .icon {
+      width: 1.05em;
+      height: 1.05em;
+      stroke-width: 1.7;
+    }
+
+    .status-icons .battery {
+      width: 1.55em;
+    }
+
+    .camera {
+      position: absolute;
+      top: .67em;
+      left: 50%;
+      width: 6.25em;
+      height: 1.7em;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: #202022;
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, .08);
+    }
+
+    .camera::after {
+      content: "";
+      position: absolute;
+      top: .54em;
+      right: .7em;
+      width: .48em;
+      height: .48em;
+      border: 1px solid #34343a;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #41414a, #17171b 65%);
+    }
+
+    /* 顶部导航 */
+    .header {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 0 0 5.5em;
+      padding: 0 1.15em 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, .74),
+        rgba(255, 255, 255, .43) 60%,
+        rgba(255, 255, 255, .03)
+      );
+    }
+
+    .header::after {
+      content: "";
+      position: absolute;
+      right: 1.1em;
+      bottom: 0;
+      left: 1.1em;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, .98) 35%,
+        #fff 50%,
+        rgba(255, 255, 255, .98) 65%,
+        rgba(255, 255, 255, 0)
+      );
+      box-shadow: 0 0 7px rgba(255, 255, 255, .9);
+    }
+
+    .back {
+      width: 2.2em;
+      height: 2.2em;
+      border: 1px solid rgba(255, 255, 255, .85);
+      border-radius: 50%;
+      color: #fff;
+      background: rgba(129, 126, 135, .31);
+      box-shadow:
+        0 3px 10px rgba(91, 87, 100, .04),
+        inset 0 1px 0 rgba(255, 255, 255, .25);
+    }
+
+    .back .icon {
+      width: 1.23em;
+      height: 1.23em;
+      stroke-width: 1.4;
+    }
+
+    .identity {
+      position: absolute;
+      top: 50%; /* 居中 */
+      left: 50%;
+      width: 8.6em;
+      transform: translate(-50%, -50%); /* X轴和Y轴同时居中 */
+      text-align: center;
+    }
+
+    .nickname {
+      margin: 0;
+      color: #333136;
+      font-size: 1.2em;
+      font-weight: 700;
+      line-height: 1.45;
+      letter-spacing: .09em;
+    }
+
+    .signature {
+      overflow: hidden;
+      margin: .45em 0 0;
+      color: #85818a;
+      font-size: .8em;
+      font-weight: 400;
+      line-height: 1.5;
+      letter-spacing: .07em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ===== 顶部右侧图标基础设定 ===== */
+    .header-actions {
+      display: flex;
+      flex-direction: column; /* 强制垂直排列 */
+      align-items: center;
+      justify-content: center;
+      gap: .4em;
+      margin-left: auto;
+      color: #67626d;
+      height: 100%;
+    }
+
+    .header-actions button {
+      width: 1.95em;
+      height: 2.4em;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-actions .icon {
+      width: 1.28em;
+      height: 1.28em;
+      stroke-width: 1.4;
+    }
+
+    /* ===== 手机端（精准控制位置和大小） ===== */
+    @media (max-width: 600px) {
+      .header-actions {
+        position: absolute;
+        top: 50%;
+        right: 15px;
+        height: 52px; /* 固定高度，防止图标乱跑 */
+        gap: 6px; /* 上下图标间距 */
+        margin-left: 0;
+        transform: translateY(-50%);
+      }
+      .header-actions button {
+        width: 30px;
+        height: 24px;
+      }
+      .header-actions .icon {
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    /* ===== 电脑端（往左收，上下收紧） ===== */
+    @media (min-width: 601px) {
+      .header-actions {
+        position: absolute;
+        top: 50%;
+        right: 20px; /* 往左移动，不再贴边 */
+        height: 52px; /* 限制高度，这样两个图标才会紧密靠拢 */
+        gap: 4px; /* 电脑端的上下间距 */
+        margin-left: 0;
+        transform: translateY(-50%);
+      }
+      .header-actions button {
+        width: 30px;
+        height: 24px;
+      }
+      .header-actions .icon {
+        width: 18px; /* 电脑端图标稍微小一点点显得精致 */
+        height: 18px;
+      }
+    }
+
+    /* 聊天内容 */
+    .conversation {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 1.4em;
+      min-height: 0;
+      padding: 1.15em 1.15em 1.4em;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: none;
+      overscroll-behavior: contain;
+    }
+
+    .conversation::-webkit-scrollbar {
+      display: none;
+    }
+
+    .timestamp {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1em;
+      flex-shrink: 0;
+      margin: .15em 0 .1em;
+      color: #a09ba5;
+      font-size: .72em;
+      line-height: 1.5;
+      letter-spacing: .12em;
+    }
+
+    .timestamp::before,
+    .timestamp::after {
+      content: "";
+      width: 2.6em;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #d3cfd7);
+    }
+
+    .timestamp::after {
+      transform: rotate(180deg);
+    }
+
+    .message {
+      display: flex;
+      align-items: flex-start;
+      gap: .65em;
+      flex-shrink: 0;
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      flex: 0 0 2.5em;
+      width: 2.5em;
+      height: 2.5em;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .9);
+      border-radius: 39%;
+      box-shadow:
+        0 4px 10px rgba(61, 57, 70, .06),
+        inset 0 1px 0 rgba(255, 255, 255, .3);
+    }
+
+    .avatar .icon {
+      width: 1.8em;
+      height: 1.8em;
+      stroke-width: 1.1;
+    }
+
+    .avatar-other {
+      color: rgba(255, 255, 255, .91);
+      background: linear-gradient(145deg, #b4b1b8, #88858e);
+    }
+
+    .avatar-self {
+      color: #85808c;
+      background: linear-gradient(145deg, #fff, #d9d6de);
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .4em;
+      min-width: 0;
+      max-width: calc(100% - 3.15em);
+    }
+
+    .bubble {
+      width: fit-content;
+      max-width: 100%;
+      padding: .58em .85em;
+      border: 1px solid rgba(255, 255, 255, .9);
+      border-radius: 1.15em 1.15em .72em 1.15em;
+      color: #fff;
+      background: rgba(77, 73, 84, .83);
+      box-shadow:
+        0 4px 12px rgba(63, 57, 75, .055),
+        inset 0 1px 0 rgba(255, 255, 255, .09);
+      font-size: 1em;
+      font-weight: 400;
+      line-height: 1.48;
+      letter-spacing: .025em;
+      overflow-wrap: anywhere;
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    .outgoing {
+      justify-content: flex-end;
+    }
+
+    .outgoing .avatar {
+      order: 2;
+    }
+
+    .outgoing .stack {
+      align-items: flex-end;
+    }
+
+    .outgoing .bubble {
+      border-radius: 1.15em 1.15em 1.15em .72em;
+      color: #45404b;
+      background: rgba(255, 255, 255, .79);
+      box-shadow:
+        0 4px 14px rgba(70, 63, 83, .035),
+        inset 0 1px 0 rgba(255, 255, 255, .85);
+    }
+
+    .sent-line {
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      gap: .48em;
+      max-width: 100%;
+    }
+
+    .read {
+      flex-shrink: 0;
+      padding-bottom: .7em;
+      color: #b2adb8;
+      font-size: .72em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .system-message {
+      flex-shrink: 0;
+      margin: .15em 0;
+      color: #a09aa6;
+      font-size: .75em;
+      line-height: 1.5;
+      letter-spacing: .12em;
+      text-align: center;
+    }
+
+    /* 悬浮磨砂输入栏 */
+    .footer {
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+      padding: .55em 1em .65em;
+      background: linear-gradient(
+        to bottom,
+        rgba(238, 237, 239, 0),
+        rgba(238, 237, 239, .54) 55%,
+        rgba(238, 237, 239, .84)
+      );
+    }
+
+    .composer {
+      display: flex;
+      align-items: center;
+      gap: .2em;
+      height: 3.65em;
+      padding: .35em .55em;
+      border: 1px solid rgba(135, 129, 141, .63);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .58);
+      box-shadow:
+        0 8px 24px rgba(74, 67, 86, .06),
+        inset 0 1px 0 rgba(255, 255, 255, .96),
+        0 1px 0 rgba(255, 255, 255, .7);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    /* 输入栏按钮的基础样式 */
+    .composer button {
+      flex: 0 0 2.35em;
+      width: 2.35em;
+      height: 2.35em;
+      border-radius: 50%;
+      color: #77717e;
+    }
+
+    /* 右侧三个按钮作为一组，整体靠右 */
+    .composer-actions {
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      gap: 0;
+      margin-left: auto;
+    }
+
+    /* 收紧三个按钮的横向占位，图标本身大小不变 */
+    .composer .composer-actions button {
+      flex: 0 0 2em;
+      width: 2em;
+    }
+
+    .composer .tools {
+      background: rgba(228, 225, 232, .47);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7);
+    }
+
+    .composer .icon {
+      width: 1.5em;
+      height: 1.5em;
+      stroke-width: 1.35;
+    }
+
+    .composer input {
+      flex: 1;
+      width: 0;
+      min-width: 0;
+      padding: .45em .55em;
+      border: 0;
+      border-radius: .4em;
+      outline: none;
+      color: #514b58;
+      background: transparent;
+      font-size: .9em;
+      letter-spacing: .06em;
+    }
+
+    .composer input::placeholder {
+      color: #aaa4af;
+      opacity: 1;
+    }
+
+    .home-indicator {
+      width: 6.7em;
+      height: .27em;
+      margin: .9em auto 0;
+      border-radius: 999px;
+      background: rgba(57, 53, 63, .73);
+    }
+
+    /* 手机端：全屏显示 */
+    @media (max-width: 600px) {
+      body {
+        background: #eeedef;
+      }
+
+      .stage {
+        min-height: 100svh;
+        padding: 0;
+      }
+
+      .device {
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        padding: 0;
+        aspect-ratio: auto;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .device::before,
+      .device::after,
+      .status-bar,
+      .home-indicator {
+        display: none;
+      }
+
+      .screen {
+        border-radius: 0;
+        font-size: 15px;
+        box-shadow: none;
+      }
+
+      .header {
+        flex-basis: calc(6.2em + env(safe-area-inset-top, 0px));
+        padding-top: calc(.4em + env(safe-area-inset-top, 0px));
+      }
+
+      /* 昵称和签名保持居中，给右侧按钮留出空间 */
+      .identity {
+        width: min(8.6em, calc(100% - 284px));
+      }
+
+      /* 昵称较长时显示省略号，避免与按钮重叠 */
+      .nickname {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* 两个按钮的基础尺寸 */
+      .header-actions button {
+        flex: 0 0 auto;
+        width: 30px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* 仅缩小中间按钮的透明占位宽度 */
+      .header-actions button:nth-child(2) {
+        flex-basis: 32px;
+        width: 32px;
+      }
+
+      /* 图标放大，保留原来的细线风格 */
+      .header-actions .icon {
+        width: 22px;
+        height: 22px;
+      }
+
+      .conversation {
+        padding-top: 1.4em;
+      }
+
+      .footer {
+        padding-bottom: max(1.1em, env(safe-area-inset-bottom, 0px));
+      }
+    }
+
+    /* 较窄的手机屏幕：适当收紧间距，保留图标大小 */
+    @media (max-width: 350px) {
+      .screen {
+        font-size: 14px;
+      }
+
+      .identity {
+        width: min(8.6em, calc(100% - 244px));
+      }
+
+      .header-actions {
+        right: 8px;
+        gap: 2px;
+      }
+
+      .header-actions button {
+        flex-basis: 34px;
+        width: 34px;
+      }
+
+      .header-actions button:nth-child(2) {
+        flex-basis: 28px;
+        width: 28px;
+      }
+    }
+
+    /* 电脑端：恢复之前正常的浅色外框、比例和字号 */
+    @media (min-width: 601px) {
+      .stage {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        min-height: 100svh;
+        padding: 32px;
+
+        background:
+          radial-gradient(
+            ellipse at 50% 10%,
+            rgba(255, 255, 255, 0.62),
+            rgba(255, 255, 255, 0) 68%
+          ),
+          #e8e8e8;
+      }
+
+      .device {
+        width: min(
+          488px,
+          calc(100vw - 64px),
+          calc((100svh - 64px) * 488 / 646)
+        );
+
+        height: min(
+          646px,
+          calc(100svh - 64px),
+          calc((100vw - 64px) * 646 / 488)
+        );
+
+        aspect-ratio: 488 / 646;
+        padding: 0;
+        overflow: hidden;
+
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 11.5% / 8.7%;
+
+        background: #ffffff;
+
+        box-shadow:
+          0 28px 65px -25px rgba(0, 0, 0, 0.20),
+          0 8px 24px -14px rgba(0, 0, 0, 0.10),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+      }
+
+      .device::before,
+      .device::after {
+        display: none;
+      }
+
+      .screen {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        box-shadow: none;
+        font-size: min(15px, 3.1cqw);
+      }
+    }
+  </style>
+
+  <!--
+    新增设置浮板样式
+    所有选择器使用 cs- 前缀，不覆盖原聊天样式。
+  -->
+  <style>
+    .cs-dialog {
+      position: fixed;
+      inset: 0;
+      width: min(680px, calc(100% - 40px));
+      max-width: none;
+      height: min(850px, calc(100vh - 64px));
+      height: min(850px, calc(100dvh - 64px));
+      max-height: none;
+      margin: auto;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .96);
+      border-radius: 34px;
+      color: #222;
+      background: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow:
+        0 32px 100px rgba(0, 0, 0, .16),
+        0 8px 28px rgba(0, 0, 0, .06),
+        inset 0 1px 0 #fff;
+    }
+
+    .cs-dialog::backdrop {
+      background: rgba(38, 38, 42, .38);
+      -webkit-backdrop-filter: blur(7px);
+      backdrop-filter: blur(7px);
+    }
+
+    .cs-dialog[open] {
+      animation: cs-panel-enter .28s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    .cs-dialog [hidden] {
+      display: none !important;
+    }
+
+    .cs-dialog button {
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .cs-dialog button:focus-visible,
+    .cs-dialog input:focus-visible,
+    .cs-panel:focus-visible {
+      outline: 2px solid #888;
+      outline-offset: 4px;
+    }
+
+    .cs-icon {
+      display: block;
+      flex: 0 0 auto;
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .cs-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .cs-heading {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-shrink: 0;
+      padding: 29px 30px 23px;
+    }
+
+    .cs-heading-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 49px;
+      width: 49px;
+      height: 49px;
+      border: 1px solid #f1f1f2;
+      border-radius: 17px;
+      color: #444;
+      background: linear-gradient(145deg, #fbfbfb, #efeff1);
+      box-shadow:
+        inset 0 1px 0 #fff,
+        0 4px 12px rgba(0, 0, 0, .025);
+    }
+
+    .cs-heading-icon .cs-icon {
+      width: 25px;
+      height: 25px;
+    }
+
+    .cs-title {
+      margin: 0;
+      color: #222;
+      font-size: 24px;
+      font-weight: 650;
+      letter-spacing: .035em;
+      line-height: 1.4;
+    }
+
+    .cs-subtitle {
+      margin: 4px 0 0;
+      color: #999;
+      font-size: 12px;
+      letter-spacing: .035em;
+    }
+
+    .cs-tabs {
+      display: flex;
+      gap: 32px;
+      flex-shrink: 0;
+      margin: 0 30px;
+      border-bottom: 1px solid #eaeaec;
+    }
+
+    .cs-tab {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 83px;
+      padding: 12px 5px 17px;
+      color: #999;
+      background: transparent;
+      font-size: 15px;
+      transition: color .2s;
+    }
+
+    .cs-tab .cs-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .cs-tab::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      width: 27px;
+      height: 3px;
+      border-radius: 999px;
+      background: #222;
+      opacity: 0;
+      transform: translateX(-50%) scaleX(.45);
+      transition: opacity .2s, transform .2s;
+    }
+
+    .cs-tab[aria-selected="true"] {
+      color: #222;
+      font-weight: 600;
+    }
+
+    .cs-tab[aria-selected="true"]::after {
+      opacity: 1;
+      transform: translateX(-50%) scaleX(1);
+    }
+
+    /* 内容独立滚动，标题、Tab、底部按钮保持固定 */
+    .cs-content {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #ddd transparent;
+    }
+
+    .cs-content::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .cs-content::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: #ddd;
+    }
+
+    .cs-panel {
+      padding: 25px 30px 30px;
+    }
+
+    .cs-panel.cs-active {
+      animation: cs-content-enter .22s ease both;
+    }
+
+    .cs-group + .cs-group {
+      margin-top: 25px;
+    }
+
+    .cs-group-title {
+      margin: 0 0 11px 2px;
+      color: #999;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: .09em;
+    }
+
+    .cs-card {
+      overflow: hidden;
+      border: 1px solid #eaeaec;
+      border-radius: 22px;
+      background: #f7f7f8;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .95),
+        0 2px 5px rgba(0, 0, 0, .012);
+    }
+
+    .cs-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-height: 75px;
+      padding: 17px 20px;
+    }
+
+    .cs-row + .cs-row::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 20px;
+      left: 20px;
+      height: 1px;
+      background: #e8e8ea;
+    }
+
+    .cs-item-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 35px;
+      width: 35px;
+      height: 35px;
+      border: 1px solid #ededee;
+      border-radius: 12px;
+      color: #666;
+      background: linear-gradient(145deg, #fff, #eeeef0);
+      box-shadow: inset 0 1px 0 #fff;
+    }
+
+    .cs-item-icon .cs-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .cs-copy {
+      display: flex;
+      flex: 1;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 4px 9px;
+      min-width: 0;
+    }
+
+    .cs-label {
+      color: #222;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .cs-description {
+      color: #999;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    /* 原生 checkbox + 纯 CSS 滑动开关 */
+    .cs-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 48px;
+      width: 48px;
+      height: 32px;
+      margin-left: auto;
+      cursor: pointer;
+    }
+
+    .cs-switch input {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .cs-switch-track {
+      position: relative;
+      display: block;
+      width: 48px;
+      height: 28px;
+      border: 1px solid rgba(0, 0, 0, .025);
+      border-radius: 999px;
+      background: #e3e3e6;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, .035);
+      transition: background .25s, box-shadow .25s;
+    }
+
+    .cs-switch-track::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow:
+        0 2px 5px rgba(0, 0, 0, .15),
+        inset 0 1px 0 rgba(255, 255, 255, .95);
+      transition: transform .25s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .cs-switch input:checked + .cs-switch-track {
+      background: #48b875;
+      box-shadow: inset 0 1px 3px rgba(18, 94, 46, .08);
+    }
+
+    .cs-switch input:checked + .cs-switch-track::after {
+      transform: translateX(20px);
+    }
+
+    .cs-switch input:focus-visible + .cs-switch-track {
+      outline: 2px solid #888;
+      outline-offset: 4px;
+    }
+
+    /* 原生 range：黑色圆点、浅灰轨道 */
+    .cs-range-row {
+      display: grid;
+      grid-template-columns: 116px minmax(0, 1fr) 78px;
+      gap: 16px;
+      min-height: 73px;
+    }
+
+    .cs-range-label {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .cs-range {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      height: 28px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      touch-action: pan-y;
+    }
+
+    .cs-range::-webkit-slider-runnable-track {
+      height: 5px;
+      border-radius: 999px;
+      background: #e5e5e8;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, .025);
+    }
+
+    .cs-range::-webkit-slider-thumb {
+      width: 19px;
+      height: 19px;
+      margin-top: -7px;
+      border: 0;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #373737, #171717);
+      box-shadow:
+        0 3px 7px rgba(0, 0, 0, .16),
+        inset 0 1px 0 rgba(255, 255, 255, .14);
+      appearance: none;
+      -webkit-appearance: none;
+      transition: box-shadow .2s;
+    }
+
+    .cs-range::-moz-range-track {
+      height: 5px;
+      border-radius: 999px;
+      background: #e5e5e8;
+    }
+
+    .cs-range::-moz-range-thumb {
+      width: 19px;
+      height: 19px;
+      border: 0;
+      border-radius: 50%;
+      background: #222;
+      box-shadow: 0 3px 7px rgba(0, 0, 0, .16);
+    }
+
+    .cs-range:hover::-webkit-slider-thumb,
+    .cs-range:active::-webkit-slider-thumb {
+      box-shadow:
+        0 0 0 5px rgba(34, 34, 34, .055),
+        0 3px 7px rgba(0, 0, 0, .16);
+    }
+
+    .cs-range:hover::-moz-range-thumb,
+    .cs-range:active::-moz-range-thumb {
+      box-shadow:
+        0 0 0 5px rgba(34, 34, 34, .055),
+        0 3px 7px rgba(0, 0, 0, .16);
+    }
+
+    /* 右侧数值支持直接输入 */
+    .cs-value-control {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 3px;
+      min-width: 0;
+      padding: 5px 4px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      transition: background .2s, border-color .2s;
+    }
+
+    .cs-value-control:hover {
+      background: #eeeef0;
+    }
+
+    .cs-value-control:focus-within {
+      border-color: #ddd;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .03);
+    }
+
+    .cs-number {
+      width: 47px;
+      min-width: 0;
+      padding: 2px 0;
+      border: 0;
+      border-radius: 3px;
+      color: #333;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 550;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    .cs-dialog .cs-number:focus-visible {
+      outline: none;
+    }
+
+    .cs-number::-webkit-inner-spin-button,
+    .cs-number::-webkit-outer-spin-button {
+      margin: 0;
+      -webkit-appearance: none;
+    }
+
+    .cs-unit {
+      flex-shrink: 0;
+      color: #999;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .cs-hint {
+      margin: 11px 3px 0;
+      color: #999;
+      font-size: 10px;
+      line-height: 1.8;
+    }
+
+    /* 美化页空状态 */
+    .cs-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      min-height: 350px;
+      padding: 50px 20px;
+      text-align: center;
+    }
+
+    .cs-empty-art {
+      position: relative;
+      isolation: isolate;
+      display: grid;
+      place-items: center;
+      width: 86px;
+      height: 86px;
+      margin-bottom: 24px;
+      border: 1px solid #eeeef0;
+      border-radius: 28px;
+      color: #777;
+      background: linear-gradient(145deg, #fff, #f0f0f2);
+      box-shadow:
+        0 12px 30px rgba(0, 0, 0, .035),
+        inset 0 1px 0 #fff;
+      transform: rotate(-7deg);
+    }
+
+    .cs-empty-art::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 5px -8px -5px 8px;
+      border: 1px solid #f0f0f2;
+      border-radius: 26px;
+      background: #fafafa;
+      transform: rotate(14deg);
+    }
+
+    .cs-empty-art .cs-icon {
+      width: 33px;
+      height: 33px;
+      stroke-width: 1.2;
+    }
+
+    .cs-empty-title {
+      margin: 0;
+      color: #333;
+      font-size: 17px;
+      font-weight: 550;
+    }
+
+    .cs-empty-description {
+      max-width: 250px;
+      margin: 12px 0 0;
+      color: #999;
+      font-size: 12px;
+      line-height: 1.9;
+    }
+
+    /* 固定底部操作区 */
+    .cs-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-shrink: 0;
+      padding: 18px 30px 22px;
+      border-top: 1px solid #ededee;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 -8px 20px rgba(255, 255, 255, .7);
+    }
+
+    .cs-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-width: 99px;
+      height: 43px;
+      padding: 0 22px;
+      border: 1px solid #ededee;
+      border-radius: 999px;
+      color: #444;
+      background: linear-gradient(180deg, #f8f8f9, #f0f0f2);
+      box-shadow:
+        inset 0 1px 0 #fff,
+        0 2px 3px rgba(0, 0, 0, .015);
+      font-size: 13px;
+      transition: transform .15s, background .2s, box-shadow .2s;
+    }
+
+    .cs-action:hover {
+      background: #eaeaec;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, .04);
+    }
+
+    .cs-action:active {
+      transform: scale(.96);
+    }
+
+    .cs-action .cs-icon {
+      width: 15px;
+      height: 15px;
+    }
+
+    .cs-save {
+      color: #222;
+      font-weight: 600;
+    }
+
+    .cs-error {
+      flex-shrink: 0;
+      margin: 0;
+      padding: 10px 30px;
+      border-top: 1px solid #eee;
+      color: #9b4242;
+      background: #fffafa;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .cs-toast {
+      position: fixed;
+      z-index: 100;
+      bottom: max(32px, env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 19px;
+      border: 1px solid rgba(255, 255, 255, .16);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(35, 35, 38, .92);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .12);
+      font-size: 13px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translate(-50%, 10px);
+      transition: opacity .2s, transform .2s, visibility .2s;
+    }
+
+    .cs-toast.cs-visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, 0);
+    }
+
+    .cs-toast .cs-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    @keyframes cs-panel-enter {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes cs-content-enter {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 只调整设置浮板的手机样式 */
+    @media (max-width: 600px) {
+      .cs-dialog {
+        width: calc(100% - 24px);
+        height: calc(
+          100vh
+          - max(14px, env(safe-area-inset-top, 0px))
+          - max(14px, env(safe-area-inset-bottom, 0px))
+        );
+        height: calc(
+          100dvh
+          - max(14px, env(safe-area-inset-top, 0px))
+          - max(14px, env(safe-area-inset-bottom, 0px))
+        );
+        border-radius: 28px;
+      }
+
+      .cs-heading {
+        gap: 12px;
+        padding: 23px 20px 18px;
+      }
+
+      .cs-heading-icon {
+        flex-basis: 43px;
+        width: 43px;
+        height: 43px;
+        border-radius: 15px;
+      }
+
+      .cs-title {
+        font-size: 21px;
+      }
+
+      .cs-subtitle {
+        font-size: 11px;
+      }
+
+      .cs-tabs {
+        gap: 26px;
+        margin: 0 20px;
+      }
+
+      .cs-tab {
+        min-width: 76px;
+        font-size: 14px;
+      }
+
+      .cs-panel {
+        padding: 23px 16px 26px;
+      }
+
+      .cs-card {
+        border-radius: 19px;
+      }
+
+      .cs-row {
+        gap: 10px;
+        min-height: 71px;
+        padding: 16px 14px;
+      }
+
+      .cs-row + .cs-row::before {
+        right: 14px;
+        left: 14px;
+      }
+
+      .cs-item-icon {
+        flex-basis: 31px;
+        width: 31px;
+        height: 31px;
+        border-radius: 10px;
+      }
+
+      .cs-label {
+        font-size: 13px;
+      }
+
+      .cs-copy {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+      }
+
+      .cs-description {
+        font-size: 10px;
+      }
+
+      .cs-range-row {
+        grid-template-columns: 100px minmax(0, 1fr) 65px;
+        gap: 8px;
+      }
+
+      .cs-range-label {
+        font-size: 12px;
+      }
+
+      .cs-number {
+        width: 40px;
+        font-size: 12px;
+      }
+
+      .cs-value-control {
+        gap: 2px;
+        padding-right: 0;
+      }
+
+      .cs-actions {
+        padding: 15px 20px 18px;
+      }
+
+      .cs-action {
+        min-width: 91px;
+        height: 42px;
+      }
+
+      .cs-error {
+        padding: 10px 20px;
+      }
+    }
+
+    @media (max-width: 350px) {
+      .cs-dialog {
+        width: calc(100% - 16px);
+        border-radius: 24px;
+      }
+
+      .cs-panel {
+        padding-right: 12px;
+        padding-left: 12px;
+      }
+
+      .cs-range-row {
+        grid-template-columns: 90px minmax(0, 1fr) 60px;
+        gap: 6px;
+      }
+
+      .cs-row {
+        padding-right: 11px;
+        padding-left: 11px;
+      }
+
+      .cs-range-label {
+        font-size: 11px;
+      }
+
+      .cs-item-icon {
+        display: none;
+      }
+
+      .cs-number {
+        width: 37px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cs-dialog,
+      .cs-dialog *,
+      .cs-dialog *::before,
+      .cs-dialog *::after,
+      .cs-toast {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 原 SVG 极简线条图标库 -->
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg"
+       aria-hidden="true">
+    <defs>
+      <symbol id="icon-back" viewBox="0 0 24 24">
+        <path d="m14.5 5-7 7 7 7" />
+      </symbol>
+
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m15.5 15.5 4.5 4.5" />
+      </symbol>
+
+      <symbol id="icon-chat" viewBox="0 0 24 24">
+        <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H9l-4.5 2v-4.5A7.5 7.5 0 0 1 4 5.7 7.5 7.5 0 0 1 12.5 4" />
+        <path d="M16 4h6M16 8h6" />
+        <path d="M18 2v4M20 6v4" />
+      </symbol>
+
+      <symbol id="icon-beauty" viewBox="0 0 24 24">
+        <path d="m5 20 9.8-9.8 3 3L8 23" transform="translate(0 -3)" />
+        <path d="m11.8 10.2 3 3" />
+        <path d="M18 2v4M16 4h4M5 5v4M3 7h4M20 16v3M18.5 17.5h3" />
+      </symbol>
+
+      <symbol id="icon-tools" viewBox="0 0 24 24">
+        <rect x="4" y="4" width="5.5" height="5.5" rx="1.6" />
+        <rect x="14.5" y="4" width="5.5" height="5.5" rx="1.6" />
+        <rect x="4" y="14.5" width="5.5" height="5.5" rx="1.6" />
+        <path d="M14.5 17.2H20M17.2 14.5V20" />
+      </symbol>
+
+      <symbol id="icon-smile" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M8 14.2a4.5 4.5 0 0 0 8 0" />
+        <path d="M8.5 9h.01M15.5 9h.01" stroke-width="2.4" />
+      </symbol>
+
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M8 12h8M12 8v8" />
+      </symbol>
+
+      <symbol id="icon-person" viewBox="0 0 32 32">
+        <circle cx="16" cy="11.5" r="5" />
+        <path d="M6.5 27c.7-5.2 4-8 9.5-8s8.8 2.8 9.5 8" />
+      </symbol>
+
+      <symbol id="icon-person-alt" viewBox="0 0 32 32">
+        <path d="M11 8.8c1-3.2 8.2-3.2 10 0" />
+        <path d="M11 10v2a5 5 0 0 0 10 0v-2" />
+        <path d="M7 27v-1a9 9 0 0 1 18 0v1" />
+        <path d="m12.5 20 3.5 4 3.5-4" />
+      </symbol>
+
+      <symbol id="icon-signal" viewBox="0 0 24 24">
+        <path d="M4 18v-3M9 18v-6M14 18V9M19 18V6" />
+      </symbol>
+
+      <symbol id="icon-wifi" viewBox="0 0 24 24">
+        <path d="M3 9a14 14 0 0 1 18 0M6.5 12.5a8.5 8.5 0 0 1 11 0M10 16a3.2 3.2 0 0 1 4 0" />
+        <path d="M12 19h.01" stroke-width="2.4" />
+      </symbol>
+
+      <symbol id="icon-battery" viewBox="0 0 30 20">
+        <rect x="2" y="4" width="23" height="12" rx="3" />
+        <path d="M28 8v4" />
+        <rect x="5" y="7" width="15" height="6" rx="1"
+              fill="currentColor" stroke="none" />
+      </symbol>
+
+      <symbol id="icon-send" viewBox="0 0 24 24">
+        <path d="M3.5 10.5 L20.5 3.5 L13.5 20.5 L10.5 13.5 Z" />
+        <path d="M10.5 13.5 L20.5 3.5" />
+      </symbol>
+
+      <!-- 新增：仅供设置浮板使用的图标 -->
+      <symbol id="cs-icon-sliders" viewBox="0 0 24 24">
+        <path d="M4 6h3M11 6h9M4 12h9M17 12h3M4 18h3M11 18h9" />
+        <circle cx="9" cy="6" r="2" />
+        <circle cx="15" cy="12" r="2" />
+        <circle cx="9" cy="18" r="2" />
+      </symbol>
+
+      <symbol id="cs-icon-reply" viewBox="0 0 24 24">
+        <path d="m9 5-6 6 6 6M3 11h11a6 6 0 0 1 6 6v2" />
+      </symbol>
+
+      <symbol id="cs-icon-read" viewBox="0 0 24 24">
+        <path d="m3 12 4 4 8-8M11 16l2 2 8-8" />
+      </symbol>
+
+      <symbol id="cs-icon-tag" viewBox="0 0 24 24">
+        <path d="M20 13 11 22 2 13V3h10Z" transform="translate(1 -1)" />
+        <circle cx="7.5" cy="6.5" r="1" />
+      </symbol>
+
+      <symbol id="cs-icon-mic" viewBox="0 0 24 24">
+        <rect x="9" y="3" width="6" height="12" rx="3" />
+        <path d="M6 11v1a6 6 0 0 0 12 0v-1M12 18v3M9 21h6" />
+      </symbol>
+
+      <symbol id="cs-icon-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+
+      <symbol id="cs-icon-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M18 6 6 18" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- 原聊天界面 -->
+  <main class="stage">
+    <section class="device" aria-label="未定义">
+      <div class="screen">
+        <div class="app">
+          <header class="header">
+            <button class="back" type="button" aria-label="未定义">
+              <svg class="icon" aria-hidden="true">
+                <use href="#icon-back" />
+              </svg>
+            </button>
+
+            <div class="identity">
+              <h1 class="nickname">未定义</h1>
+              <p class="signature">未定义</p>
+            </div>
+
+            <nav class="header-actions" aria-label="未定义">
+              <button type="button" aria-label="搜索">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#icon-search" />
+                </svg>
+              </button>
+
+              <!-- 仅增加标识和无障碍属性，不改变按钮样式 -->
+              <button
+                id="cs-open"
+                type="button"
+                aria-label="设置"
+                aria-haspopup="dialog"
+                aria-controls="cs-dialog"
+              >
+                <svg class="icon" aria-hidden="true">
+                  <use href="#icon-beauty" />
+                </svg>
+              </button>
+            </nav>
+          </header>
+
+          <section class="conversation" aria-label="未定义">
+            <div class="timestamp">未定义</div>
+
+            <article class="message incoming">
+              <div class="avatar avatar-other" aria-hidden="true">
+                <svg class="icon"><use href="#icon-person" /></svg>
+              </div>
+              <div class="stack">
+                <div class="bubble">未定义</div>
+                <div class="bubble">
+                  未定义 未定义 未定义<br />
+                  未定义 未定义
+                </div>
+              </div>
+            </article>
+
+            <article class="message outgoing">
+              <div class="avatar avatar-self" aria-hidden="true">
+                <svg class="icon"><use href="#icon-person-alt" /></svg>
+              </div>
+              <div class="stack">
+                <div class="sent-line">
+                  <span class="read">未定义</span>
+                  <div class="bubble">
+                    未定义 未定义<br />
+                    未定义 未定义 未定义
+                  </div>
+                </div>
+                <div class="sent-line">
+                  <span class="read">未定义</span>
+                  <div class="bubble">未定义</div>
+                </div>
+              </div>
+            </article>
+
+            <div class="system-message">未定义</div>
+
+            <article class="message incoming">
+              <div class="avatar avatar-other" aria-hidden="true">
+                <svg class="icon"><use href="#icon-person" /></svg>
+              </div>
+              <div class="stack">
+                <div class="bubble">未定义 未定义</div>
+                <div class="bubble">
+                  未定义 未定义 未定义<br />
+                  未定义
+                </div>
+              </div>
+            </article>
+
+            <article class="message outgoing">
+              <div class="avatar avatar-self" aria-hidden="true">
+                <svg class="icon"><use href="#icon-person-alt" /></svg>
+              </div>
+              <div class="stack">
+                <div class="sent-line">
+                  <span class="read">未定义</span>
+                  <div class="bubble">未定义 未定义</div>
+                </div>
+                <div class="sent-line">
+                  <span class="read">未定义</span>
+                  <div class="bubble">未定义</div>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <footer class="footer">
+            <div class="composer">
+              <!-- 左侧工具按钮 -->
+              <button class="tools" type="button" aria-label="未定义">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#icon-tools" />
+                </svg>
+              </button>
+
+              <!-- 输入框 -->
+              <input
+                type="text"
+                placeholder="未定义"
+                aria-label="未定义"
+                autocomplete="off"
+              />
+
+              <!-- 右侧三个图标 -->
+              <div class="composer-actions">
+                <button type="button" aria-label="未定义">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#icon-smile" />
+                  </svg>
+                </button>
+
+                <button type="button" aria-label="未定义">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#icon-plus" />
+                  </svg>
+                </button>
+
+                <button type="button" aria-label="发送">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#icon-send" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="home-indicator" aria-hidden="true"></div>
+          </footer>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!--
+    新增设置浮板：
+    放在 main 外面，不参与聊天容器的布局与字号计算。
+    原生 dialog 使用顶层模态显示，并提供焦点约束。
+  -->
+  <dialog
+    id="cs-dialog"
+    class="cs-dialog"
+    aria-labelledby="cs-title"
+    aria-describedby="cs-subtitle"
+  >
+    <div class="cs-shell">
+      <header class="cs-heading">
+        <div class="cs-heading-icon" aria-hidden="true">
+          <svg class="cs-icon">
+            <use href="#icon-chat" />
+          </svg>
+        </div>
+
+        <div>
+          <h2 id="cs-title" class="cs-title">聊天设置</h2>
+          <p id="cs-subtitle" class="cs-subtitle">
+            调整细节，让聊天更合心意
+          </p>
+        </div>
+      </header>
+
+      <nav class="cs-tabs" role="tablist" aria-label="设置分类">
+        <button
+          id="cs-tab-function"
+          class="cs-tab"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="cs-panel-function"
+          tabindex="0"
+        >
+          <svg class="cs-icon" aria-hidden="true">
+            <use href="#cs-icon-sliders" />
+          </svg>
+          <span>功能</span>
+        </button>
+
+        <button
+          id="cs-tab-beauty"
+          class="cs-tab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="cs-panel-beauty"
+          tabindex="-1"
+        >
+          <svg class="cs-icon" aria-hidden="true">
+            <use href="#icon-beauty" />
+          </svg>
+          <span>美化</span>
+        </button>
+      </nav>
+
+      <div id="cs-content" class="cs-content">
+        <!-- 功能页根据下方 JS 配置生成 -->
+        <section
+          id="cs-panel-function"
+          class="cs-panel cs-active"
+          role="tabpanel"
+          aria-labelledby="cs-tab-function"
+          tabindex="0"
+        ></section>
+
+        <!-- 美化页空状态 -->
+        <section
+          id="cs-panel-beauty"
+          class="cs-panel"
+          role="tabpanel"
+          aria-labelledby="cs-tab-beauty"
+          tabindex="0"
+          hidden
+        >
+          <div class="cs-empty">
+            <div class="cs-empty-art" aria-hidden="true">
+              <svg class="cs-icon">
+                <use href="#icon-beauty" />
+              </svg>
+            </div>
+
+            <h3 class="cs-empty-title">留一点空间，给你的风格</h3>
+            <p class="cs-empty-description">
+              美化设置即将入住这里。<br />
+              未来可以调整背景、气泡与更多聊天细节。
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <p id="cs-error" class="cs-error" role="alert" hidden></p>
+
+      <footer class="cs-actions">
+        <button id="cs-close" class="cs-action" type="button">
+          <svg class="cs-icon" aria-hidden="true">
+            <use href="#cs-icon-close" />
+          </svg>
+          <span>关闭</span>
+        </button>
+
+        <button id="cs-save" class="cs-action cs-save" type="button">
+          <svg class="cs-icon" aria-hidden="true">
+            <use href="#cs-icon-check" />
+          </svg>
+          <span>保存</span>
+        </button>
+      </footer>
+    </div>
+  </dialog>
+
+  <div id="cs-toast" class="cs-toast" role="status" aria-live="polite">
+    <svg class="cs-icon" aria-hidden="true">
+      <use href="#cs-icon-check" />
+    </svg>
+    <span id="cs-toast-text"></span>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /*
+       * 设置浮板脚本
+       * 不修改原聊天界面的样式、字号或布局。
+       *
+       * 保存：写入当前浏览器 localStorage。
+       * 关闭：丢弃未保存草稿。
+       * 所有时间在存储中统一使用秒。
+       */
+
+      const STORAGE_KEY = "chat-settings-v1";
+
+      const groups = [
+        {
+          title: "消息交互",
+          items: [
+            {
+              key: "quoteReply",
+              type: "switch",
+              label: "引用回复",
+              icon: "cs-icon-reply",
+              defaultValue: true
+            },
+            {
+              key: "leaveOnRead",
+              type: "switch",
+              label: "已读不回",
+              icon: "cs-icon-read",
+              defaultValue: false
+            }
+          ]
+        },
+        {
+          title: "回复速度",
+          hint:
+            "点击右侧数值可直接编辑；时间编辑使用秒，满 60 秒自动显示为分钟。",
+          items: [
+            {
+              key: "minReplyTime",
+              type: "range",
+              label: "最短回复时间",
+              min: 1,
+              max: 30,
+              unit: "秒",
+              defaultValue: 15
+            },
+            {
+              key: "maxReplyTime",
+              type: "range",
+              label: "最长回复时间",
+              min: 1,
+              max: 1800,
+              unit: "秒",
+              formatMinutes: true,
+              defaultValue: 120
+            },
+            {
+              key: "minReplyCount",
+              type: "range",
+              label: "最短回复条数",
+              min: 1,
+              max: 10,
+              unit: "条",
+              defaultValue: 1
+            },
+            {
+              key: "maxReplyCount",
+              type: "range",
+              label: "最多回复条数",
+              min: 1,
+              max: 5,
+              unit: "条",
+              defaultValue: 3
+            }
+          ]
+        },
+        {
+          title: "主动发送",
+          items: [
+            {
+              key: "proactiveMessage",
+              type: "switch",
+              label: "主动发消息给我",
+              icon: "icon-send",
+              defaultValue: false
+            },
+            {
+              key: "proactiveBadge",
+              type: "switch",
+              label: "主动发标识",
+              icon: "cs-icon-tag",
+              defaultValue: false
+            },
+            {
+              key: "proactiveProbability",
+              type: "range",
+              label: "主动发送概率",
+              min: 1,
+              max: 100,
+              unit: "%",
+              defaultValue: 50
+            },
+            {
+              key: "minSendTime",
+              type: "range",
+              label: "最短发送时间",
+              min: 1,
+              max: 30,
+              unit: "秒",
+              defaultValue: 10
+            },
+            {
+              key: "maxSendTime",
+              type: "range",
+              label: "最长发送时间",
+              min: 1,
+              max: 1800,
+              unit: "秒",
+              formatMinutes: true,
+              defaultValue: 300
+            },
+            {
+              key: "minSendCount",
+              type: "range",
+              label: "最少发送条数",
+              min: 1,
+              max: 10,
+              unit: "条",
+              defaultValue: 1
+            },
+            {
+              key: "maxSendCount",
+              type: "range",
+              label: "最多发送条数",
+              min: 1,
+              max: 5,
+              unit: "条",
+              defaultValue: 3
+            }
+          ]
+        },
+        {
+          title: "消息节奏",
+          items: [
+            {
+              key: "mixEmoji",
+              type: "switch",
+              label: "表情混入消息",
+              description: "开启后表情与文字同条发送",
+              icon: "icon-smile",
+              defaultValue: true
+            },
+            {
+              key: "mixVoice",
+              type: "switch",
+              label: "语音混入消息",
+              description: "开启后语音与文字同条发送",
+              icon: "cs-icon-mic",
+              defaultValue: false
+            }
+          ]
+        }
+      ];
+
+      const items = groups.flatMap(group => group.items);
+      const itemMap = new Map(items.map(item => [item.key, item]));
+
+      const defaults = Object.fromEntries(
+        items.map(item => [item.key, item.defaultValue])
+      );
+
+      const dialog = document.getElementById("cs-dialog");
+      const openButton = document.getElementById("cs-open");
+      const closeButton = document.getElementById("cs-close");
+      const saveButton = document.getElementById("cs-save");
+      const functionPanel = document.getElementById("cs-panel-function");
+      const content = document.getElementById("cs-content");
+      const errorBox = document.getElementById("cs-error");
+      const toast = document.getElementById("cs-toast");
+      const toastText = document.getElementById("cs-toast-text");
+      const tabs = Array.from(dialog.querySelectorAll(".cs-tab"));
+
+      let saved = loadSettings();
+      let draft = { ...saved };
+      let toastTimer;
+
+      function clampInteger(value, min, max) {
+        return Math.min(max, Math.max(min, Math.round(value)));
+      }
+
+      /*
+       * 校验读取的数据，只接收配置中已声明的设置项。
+       * 各项范围严格按需求保留，不擅自改变其他项数值。
+       */
+      function normalize(source) {
+        const result = { ...defaults };
+
+        if (
+          !source ||
+          typeof source !== "object" ||
+          Array.isArray(source)
+        ) {
+          return result;
+        }
+
+        for (const item of items) {
+          const value = source[item.key];
+
+          if (item.type === "switch") {
+            if (typeof value === "boolean") {
+              result[item.key] = value;
+            }
+          } else if (
+            typeof value === "number" &&
+            Number.isFinite(value)
+          ) {
+            result[item.key] = clampInteger(
+              value,
+              item.min,
+              item.max
+            );
+          }
+        }
+
+        return result;
+      }
+
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? normalize(JSON.parse(raw)) : { ...defaults };
+        } catch {
+          return { ...defaults };
+        }
+      }
+
+      function iconMarkup(id) {
+        return `
+          <svg class="cs-icon" aria-hidden="true">
+            <use href="#${id}"></use>
+          </svg>
+        `;
+      }
+
+      function switchMarkup(item) {
+        return `
+          <div class="cs-row">
+            <div class="cs-item-icon" aria-hidden="true">
+              ${iconMarkup(item.icon)}
+            </div>
+
+            <div class="cs-copy">
+              <span
+                id="cs-label-${item.key}"
+                class="cs-label"
+              >${item.label}</span>
+
+              ${
+                item.description
+                  ? `
+                    <span
+                      id="cs-description-${item.key}"
+                      class="cs-description"
+                    >${item.description}</span>
+                  `
+                  : ""
+              }
+            </div>
+
+            <label class="cs-switch">
+              <input
+                type="checkbox"
+                role="switch"
+                data-cs-switch="${item.key}"
+                aria-labelledby="cs-label-${item.key}"
+                ${
+                  item.description
+                    ? `aria-describedby="cs-description-${item.key}"`
+                    : ""
+                }
+              />
+              <span
+                class="cs-switch-track"
+                aria-hidden="true"
+              ></span>
+            </label>
+          </div>
+        `;
+      }
+
+      function rangeMarkup(item) {
+        return `
+          <div class="cs-row cs-range-row">
+            <label
+              id="cs-label-${item.key}"
+              class="cs-label cs-range-label"
+              for="cs-range-${item.key}"
+            >${item.label}</label>
+
+            <input
+              id="cs-range-${item.key}"
+              class="cs-range"
+              type="range"
+              min="${item.min}"
+              max="${item.max}"
+              step="1"
+              data-cs-range="${item.key}"
+              aria-labelledby="cs-label-${item.key}"
+            />
+
+            <div
+              class="cs-value-control"
+              title="点击编辑，范围 ${item.min}–${item.max}${item.unit}"
+            >
+              <input
+                class="cs-number"
+                type="number"
+                inputmode="numeric"
+                step="any"
+                data-cs-value="${item.key}"
+                aria-label="${item.label}，单位${item.unit}"
+                autocomplete="off"
+              />
+              <span
+                class="cs-unit"
+                data-cs-unit="${item.key}"
+              >${item.unit}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderSettings() {
+        // 模板只使用上方固定配置，存储数据通过属性赋值。
+        functionPanel.innerHTML = groups.map((group, index) => `
+          <section
+            class="cs-group"
+            aria-labelledby="cs-group-${index}"
+          >
+            <h3 id="cs-group-${index}" class="cs-group-title">
+              ${group.title}
+            </h3>
+
+            <div class="cs-card">
+              ${group.items.map(item =>
+                item.type === "switch"
+                  ? switchMarkup(item)
+                  : rangeMarkup(item)
+              ).join("")}
+            </div>
+
+            ${
+              group.hint
+                ? `<p class="cs-hint">${group.hint}</p>`
+                : ""
+            }
+          </section>
+        `).join("");
+
+        for (const item of items) {
+          if (item.type === "switch") {
+            functionPanel.querySelector(
+              `[data-cs-switch="${item.key}"]`
+            ).checked = draft[item.key];
+          } else {
+            syncRange(item.key);
+          }
+        }
+      }
+
+      /*
+       * 时间显示：
+       * 59 -> 59 秒
+       * 60 -> 1 分钟
+       * 90 -> 1.5 分钟
+       * 1800 -> 30 分钟
+       *
+       * 非整分钟显示最多两位小数，
+       * 保存和编辑始终使用准确的整数秒。
+       */
+      function displayValue(item, value) {
+        if (item.formatMinutes && value >= 60) {
+          return {
+            value: Number((value / 60).toFixed(2)),
+            unit: "分钟"
+          };
+        }
+
+        return { value, unit: item.unit };
+      }
+
+      function syncRange(key) {
+        const item = itemMap.get(key);
+        const value = draft[key];
+
+        const range = functionPanel.querySelector(
+          `[data-cs-range="${key}"]`
+        );
+        const input = functionPanel.querySelector(
+          `[data-cs-value="${key}"]`
+        );
+        const unit = functionPanel.querySelector(
+          `[data-cs-unit="${key}"]`
+        );
+
+        const formatted = displayValue(item, value);
+
+        range.value = String(value);
+        range.setAttribute(
+          "aria-valuetext",
+          `${formatted.value}${formatted.unit}`
+        );
+
+        // 输入过程中不覆盖内容，避免光标跳动。
+        if (input.dataset.csEditing !== "true") {
+          input.value = String(formatted.value);
+          unit.textContent = formatted.unit;
+
+          input.setAttribute(
+            "aria-label",
+            `${item.label}，当前${formatted.value}${formatted.unit}，` +
+            `点击后以${item.unit}编辑`
+          );
+        }
+      }
+
+      function beginNumberEdit(input) {
+        if (input.dataset.csEditing === "true") return;
+
+        const key = input.dataset.csValue;
+        const item = itemMap.get(key);
+
+        input.dataset.csEditing = "true";
+        input.value = String(draft[key]);
+        input.min = String(item.min);
+        input.max = String(item.max);
+        input.step = "1";
+
+        input.setAttribute(
+          "aria-label",
+          `${item.label}，单位${item.unit}，范围${item.min}到${item.max}`
+        );
+
+        functionPanel.querySelector(
+          `[data-cs-unit="${key}"]`
+        ).textContent = item.unit;
+      }
+
+      function finishNumberEdit(input, cancel = false) {
+        if (input.dataset.csEditing !== "true") return;
+
+        const key = input.dataset.csValue;
+        const item = itemMap.get(key);
+        const raw = input.value.trim();
+        const value = Number(raw);
+
+        if (!cancel && raw !== "" && Number.isFinite(value)) {
+          draft[key] = clampInteger(value, item.min, item.max);
+        }
+
+        // 空值或非法输入恢复原值；超出范围则限制到边界。
+        delete input.dataset.csEditing;
+        input.removeAttribute("min");
+        input.removeAttribute("max");
+        input.step = "any";
+
+        syncRange(key);
+      }
+
+      // 开关事件
+      functionPanel.addEventListener("change", event => {
+        const target = event.target;
+
+        if (target.matches("[data-cs-switch]")) {
+          draft[target.dataset.csSwitch] = target.checked;
+        }
+      });
+
+      // 拖动滑块实时更新右侧数值
+      functionPanel.addEventListener("input", event => {
+        const target = event.target;
+
+        if (!target.matches("[data-cs-range]")) return;
+
+        const key = target.dataset.csRange;
+        draft[key] = Number(target.value);
+        syncRange(key);
+      });
+
+      functionPanel.addEventListener("focusin", event => {
+        if (event.target.matches("[data-cs-value]")) {
+          beginNumberEdit(event.target);
+        }
+      });
+
+      functionPanel.addEventListener("focusout", event => {
+        if (event.target.matches("[data-cs-value]")) {
+          finishNumberEdit(event.target);
+        }
+      });
+
+      functionPanel.addEventListener("keydown", event => {
+        const input = event.target;
+
+        if (!input.matches("[data-cs-value]")) return;
+
+        if (event.key === "Enter") {
+          event.preventDefault();
+          finishNumberEdit(input);
+          input.blur();
+        } else if (event.key === "Escape") {
+          // 编辑数字时先取消本次编辑，不直接关闭整个面板。
+          event.preventDefault();
+          event.stopPropagation();
+          finishNumberEdit(input, true);
+          input.blur();
+        }
+      });
+
+      /*
+       * Tab 切换：
+       * 点击与左右方向键均可使用。
+       * 非活动面板使用 hidden 隐藏。
+       */
+      function selectTab(tab, focus = false) {
+        for (const currentTab of tabs) {
+          const selected = currentTab === tab;
+          const panel = document.getElementById(
+            currentTab.getAttribute("aria-controls")
+          );
+
+          currentTab.setAttribute("aria-selected", String(selected));
+          currentTab.tabIndex = selected ? 0 : -1;
+
+          panel.hidden = !selected;
+          panel.classList.toggle("cs-active", selected);
+        }
+
+        content.scrollTop = 0;
+
+        if (focus) tab.focus();
+      }
+
+      tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => selectTab(tab));
+
+        tab.addEventListener("keydown", event => {
+          let nextIndex;
+
+          switch (event.key) {
+            case "ArrowRight":
+              nextIndex = (index + 1) % tabs.length;
+              break;
+            case "ArrowLeft":
+              nextIndex = (index - 1 + tabs.length) % tabs.length;
+              break;
+            case "Home":
+              nextIndex = 0;
+              break;
+            case "End":
+              nextIndex = tabs.length - 1;
+              break;
+            default:
+              return;
+          }
+
+          event.preventDefault();
+          selectTab(tabs[nextIndex], true);
+        });
+      });
+
+      function hideToast() {
+        clearTimeout(toastTimer);
+        toast.classList.remove("cs-visible");
+        toastText.textContent = "";
+      }
+
+      function showToast() {
+        clearTimeout(toastTimer);
+        toastText.textContent = "设置已保存";
+        toast.classList.add("cs-visible");
+
+        toastTimer = setTimeout(() => {
+          toast.classList.remove("cs-visible");
+        }, 2200);
+      }
+
+      function openSettings() {
+        if (dialog.open) return;
+
+        saved = loadSettings();
+        draft = { ...saved };
+
+        errorBox.hidden = true;
+        errorBox.textContent = "";
+
+        hideToast();
+        renderSettings();
+        selectTab(tabs[0]);
+
+        /*
+         * 使用原生模态层，不修改 body、stage、device
+         * 的宽度、字号、padding 或 overflow。
+         */
+        dialog.showModal();
+        tabs[0].focus({ preventScroll: true });
+      }
+
+      function closeSettings() {
+        draft = { ...saved };
+        dialog.close();
+      }
+
+      openButton.addEventListener("click", openSettings);
+      closeButton.addEventListener("click", closeSettings);
+
+      dialog.addEventListener("cancel", event => {
+        event.preventDefault();
+        closeSettings();
+      });
+
+      dialog.addEventListener("close", () => {
+        openButton.focus({ preventScroll: true });
+      });
+
+      saveButton.addEventListener("click", () => {
+        // 确保正在编辑的数值也一并提交。
+        functionPanel.querySelectorAll(
+          '[data-cs-editing="true"]'
+        ).forEach(input => {
+          finishNumberEdit(input);
+        });
+
+        const nextSettings = normalize(draft);
+
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(nextSettings)
+          );
+        } catch {
+          errorBox.textContent =
+            "当前浏览器无法保存设置，请检查本地存储权限后重试。";
+          errorBox.hidden = false;
+          return;
+        }
+
+        saved = { ...nextSettings };
+        draft = { ...nextSettings };
+
+        /*
+         * 为以后接入实际聊天逻辑预留保存事件。
+         * event.detail 为所有已保存的设置。
+         */
+        window.dispatchEvent(
+          new CustomEvent("chat-settings-saved", {
+            detail: { ...saved }
+          })
+        );
+
+        dialog.close();
+        showToast();
+      });
+
+      /*
+       * 后续可通过此方法读取设置：
+       * const settings = window.getChatSettings();
+       */
+      window.getChatSettings = () => ({ ...saved });
+    })();
+  </script>
+</body>
+</html>
