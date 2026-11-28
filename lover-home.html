@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>个人主页 - 夜翎专属</title>
+  
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="夜翎专属">
+  <meta name="theme-color" content="#f7f7f7">
+  <link rel="apple-touch-icon" href="./icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
   <style>
     /* ===== 全局重置与防拉伸 ===== */
@@ -377,7 +384,14 @@
         </div>
 
         <div class="grid-section">
-          <div class="grid-item" onclick="window.location.href='chat.html?id=${currentLoverId}'"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><div class="grid-text">聊天</div></div>
+          <div class="grid-item" id="openChatBtn" role="button" tabindex="0">
+  <div class="icon-box">
+    <svg viewBox="0 0 24 24">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+    </svg>
+  </div>
+  <div class="grid-text">聊天</div>
+</div>
           <div class="grid-item"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7 L9.5 4 L14.5 4 L16 7"></path><circle cx="12" cy="13" r="4"></circle><circle cx="18" cy="10" r="1" fill="#111" stroke="none"></circle></svg></div><div class="grid-text">朋友圈</div></div>
           <div class="grid-item"><div class="icon-box"><div class="icon-badge">3</div><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div class="grid-text">信箱</div></div>
           <div class="grid-item"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><div class="grid-text">相册</div></div>
@@ -481,6 +495,20 @@
     let allHomeData = JSON.parse(localStorage.getItem('loverHomeData')) || {};
     if (!allHomeData[currentLoverId]) { allHomeData[currentLoverId] = { p0: '', p1: '' }; }
     let homeData = allHomeData[currentLoverId];
+    const openChatBtn = document.getElementById('openChatBtn');
+
+openChatBtn.addEventListener('click', () => {
+  const target = new URL('./chat.html', window.location.href);
+  target.searchParams.set('id', currentLoverId);
+  window.location.assign(target.href);
+});
+
+openChatBtn.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    openChatBtn.click();
+  }
+});
 
     function renderUI() {
       if (currentLover.avatar) { $('loverAvatarImg').src = currentLover.avatar; $('loverAvatarImg').style.display = 'block'; } else { $('loverAvatarImg').style.display = 'none'; }

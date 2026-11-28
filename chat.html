@@ -6,6 +6,11 @@
         content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#eeedef" />
   <title>未定义</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="夜翎专属">
+  <link rel="apple-touch-icon" href="./icon.png">
 
   <!-- 原聊天界面样式：保留原数值和规则顺序 -->
   <style>
@@ -2714,5 +2719,68 @@
       window.getChatSettings = () => ({ ...saved });
     })();
   </script>
+  
+  <script>
+(() => {
+  const params = new URLSearchParams(window.location.search);
+  const loverId = params.get('id');
+
+  let lovers = [];
+
+  try {
+    lovers = JSON.parse(localStorage.getItem('lovers')) || [];
+  } catch (error) {
+    lovers = [];
+  }
+
+  const lover = lovers.find(item => item && item.id === loverId);
+
+  const backButton = document.querySelector('.back');
+  const nickname = document.querySelector('.nickname');
+  const device = document.querySelector('.device');
+
+  if (!loverId || !lover) {
+    document.title = '未找到爱人';
+
+    if (nickname) {
+      nickname.textContent = '未找到爱人';
+    }
+
+    if (device) {
+      device.setAttribute('aria-label', '未找到爱人');
+    }
+
+    if (backButton) {
+      backButton.setAttribute('aria-label', '返回首页');
+      backButton.addEventListener('click', () => {
+        window.location.assign('./index.html');
+      });
+    }
+
+    return;
+  }
+
+  // 只修改页面标题和顶部昵称，不修改聊天区域中的静态示例内容
+  document.title = `${lover.name} - 聊天`;
+
+  if (nickname) {
+    nickname.textContent = lover.name || 'TA';
+  }
+
+  if (device) {
+    device.setAttribute('aria-label', `与${lover.name || 'TA'}的聊天`);
+  }
+
+  if (backButton) {
+    backButton.setAttribute('aria-label', '返回个人主页');
+
+    backButton.addEventListener('click', () => {
+      const target = new URL('./lover-home.html', window.location.href);
+      target.searchParams.set('id', loverId);
+      window.location.assign(target.href);
+    });
+  }
+})();
+</script>
 </body>
 </html>
